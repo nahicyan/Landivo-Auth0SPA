@@ -1,3 +1,4 @@
+// client/src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query";
@@ -48,7 +49,15 @@ import { Auth0ProviderWithNavigate } from "./components/Auth0/Auth0Provider";
 
 import "react-toastify/dist/ReactToastify.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (

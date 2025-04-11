@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { CalendarClock, Mail, User, MapPin, LogOut } from 'lucide-react';
+import Auth0DebugComponent from '@/components/Auth0/Auth0DebugComponent';
 
 const Profile = () => {
   const { user, isLoading, isAuthenticated, logout } = useAuth0();
@@ -29,8 +30,8 @@ const Profile = () => {
   }
 
   // Format the date when user signed up (if available)
-  const createdAt = user.created_at 
-    ? new Date(user.created_at).toLocaleDateString() 
+  const createdAt = user.created_at
+    ? new Date(user.created_at).toLocaleDateString()
     : 'Not available';
 
   return (
@@ -38,16 +39,16 @@ const Profile = () => {
       <Card className="w-full overflow-hidden">
         {/* Header with background */}
         <div className="h-32 bg-gradient-to-r from-[#3f4f24] to-[#324c48]"></div>
-        
+
         {/* Profile Main Content */}
         <CardContent className="relative px-6 pt-0 pb-6">
           {/* Profile Picture */}
           <div className="absolute -top-16 left-6">
             <Avatar className="h-32 w-32 border-4 border-white bg-white">
               {user.picture ? (
-                <img 
-                  src={user.picture} 
-                  alt={user.name || "User"} 
+                <img
+                  src={user.picture}
+                  alt={user.name || "User"}
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -55,7 +56,7 @@ const Profile = () => {
               )}
             </Avatar>
           </div>
-          
+
           {/* User Info */}
           <div className="mt-20">
             <div className="flex items-start justify-between">
@@ -68,22 +69,22 @@ const Profile = () => {
                   <span>{user.email}</span>
                 </div>
               </div>
-              
+
               {/* Logout Button */}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                onClick={() => logout({ 
-                  logoutParams: { returnTo: window.location.origin } 
+                onClick={() => logout({
+                  logoutParams: { returnTo: window.location.origin }
                 })}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
             </div>
-            
+
             <Separator className="my-6" />
-            
+
             {/* User Details */}
             <div className="grid md:grid-cols-2 gap-6">
               {/* Left Column */}
@@ -100,14 +101,14 @@ const Profile = () => {
                     </Badge>
                   )}
                 </div>
-                
+
                 {user.nickname && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Nickname</h3>
                     <p className="text-gray-700">{user.nickname}</p>
                   </div>
                 )}
-                
+
                 {user.locale && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Locale</h3>
@@ -115,16 +116,19 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Right Column */}
               <div className="space-y-4">
+                <div className="my-4">
+                  <Auth0DebugComponent />
+                </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Authentication Method</h3>
                   <Badge className="capitalize bg-blue-100 text-blue-800 hover:bg-blue-100">
                     {user.sub?.split('|')[0] || 'auth0'}
                   </Badge>
                 </div>
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Account Created</h3>
                   <div className="flex items-center">
@@ -132,7 +136,7 @@ const Profile = () => {
                     <p className="text-gray-700">{createdAt}</p>
                   </div>
                 </div>
-                
+
                 {user.updated_at && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Last Updated</h3>
@@ -145,7 +149,7 @@ const Profile = () => {
             </div>
           </div>
         </CardContent>
-        
+
         <CardFooter className="bg-gray-50 py-4 border-t text-sm text-gray-500">
           <div className="flex items-center space-x-2">
             <User className="w-4 h-4" />

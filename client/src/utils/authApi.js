@@ -1,67 +1,158 @@
 // client/src/utils/authApi.js
 import axios from 'axios';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useState, useEffect, useCallback } from 'react';
 
-// Create a function that returns an authenticated API instance
+// Create a custom hook that returns authenticated API methods
 export function useAuthApi() {
-  const { getToken, isAuthenticated } = useAuth();
+  const { getAccessTokenSilently, isAuthenticated, isLoading } = useAuth0();
+  const [authAxios, setAuthAxios] = useState(null);
+  const [isReady, setIsReady] = useState(false);
   
-  // Create a base API instance
-  const api = axios.create({
-    baseURL: `${import.meta.env.VITE_SERVER_URL}/api`,
-    withCredentials: true,
-  });
-  
-  // Function to make authenticated requests
-  const authRequest = async (method, url, data = null, options = {}) => {
-    try {
-      // Only attempt to get token if authenticated
-      const token = isAuthenticated ? await getToken() : null;
-      
-      // Set headers
-      const headers = {
-        ...(options.headers || {}),
-      };
-      
-      // Add Authorization header if token exists
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+  // Create the authorized API instance
+  useEffect(() => {
+    // Don't try to create the instance until Auth0 is done loading
+    if (isLoading) return;
+    
+    const instance = axios.create({
+      baseURL: `${import.meta.env.VITE_SERVER_URL}/api`,
+      withCredentials: true,
+    });
+    
+    // Add request interceptor to add token to all requests
+    instance.interceptors.request.use(
+      async (config) => {
+        if (isAuthenticated) {
+          try {
+            const token = await getAccessTokenSilently();
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+              console.log('Added auth token to request:', config.url);
+            }
+          } catch (error) {
+            console.error('Error getting access token for request:', error);
+          }
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+    
+    // Add response interceptor for debugging
+    instance.interceptors.response.use(
+      (response) => {
+        console.log(`API response ${response.config.method} ${response.config.url}:`, response.status);
+        return response;
+      },
+      (error) => {
+        console.error('API error:', {
+          url: error.config?.url,
+          method: error.config?.method,
+          status: error.response?.status,
+          data: error.response?.data
+        });
+        return Promise.reject(error);
       }
-      
-      // Make the request
-      const response = await api({
-        method,
-        url,
-        data,
-        headers,
-        ...options,
-      });
-      
+    );
+    
+    setAuthAxios(instance);
+    setIsReady(true);
+  }, [getAccessTokenSilently, isAuthenticated, isLoading]);
+  
+  // Create API methods with better error handling
+  const get = useCallback(async (url, options = {}) => {
+    if (!authAxios) {
+      console.error('API not ready yet');
+      return null;
+    }
+    
+    try {
+      console.log(`Making GET request to ${url}`);
+      const response = await authAxios.get(url, options);
       return response.data;
     } catch (error) {
-      console.error(`API error (${method} ${url}):`, error);
+      console.error(`GET ${url} failed:`, error.response?.data || error.message);
       throw error;
     }
-  };
+  }, [authAxios]);
   
-  // Return an object with methods for each HTTP verb
-  return {
-    get: (url, options = {}) => authRequest('get', url, null, options),
-    post: (url, data, options = {}) => authRequest('post', url, data, options),
-    put: (url, data, options = {}) => authRequest('put', url, data, options),
-    delete: (url, options = {}) => authRequest('delete', url, null, options),
-    // Example usage with FormData
-    postForm: async (url, formData, options = {}) => {
-      const token = isAuthenticated ? await getToken() : null;
-      const headers = { 
-        ...(options.headers || {}),
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      };
-      
-      return api.post(url, formData, { 
-        ...options, 
-        headers,
-      }).then(response => response.data);
+  const post = useCallback(async (url, data, options = {}) => {
+    if (!authAxios) {
+      console.error('API not ready yet');
+      return null;
     }
+    
+    try {
+      console.log(`Making POST request to ${url}`);
+      const response = await authAxios.post(url, data, options);
+      return response.data;
+    } catch (error) {
+      console.error(`POST ${url} failed:`, error.response?.data || error.message);
+      throw error;
+    }
+  }, [authAxios]);
+  
+  const put = useCallback(async (url, data, options = {}) => {
+    if (!authAxios) {
+      console.error('API not ready yet');
+      return null;
+    }
+    
+    try {
+      console.log(`Making PUT request to ${url}`);
+      const response = await authAxios.put(url, data, options);
+      return response.data;
+    } catch (error) {
+      console.error(`PUT ${url} failed:`, error.response?.data || error.message);
+      throw error;
+    }
+  }, [authAxios]);
+  
+  const del = useCallback(async (url, options = {}) => {
+    if (!authAxios) {
+      console.error('API not ready yet');
+      return null;
+    }
+    
+    try {
+      console.log(`Making DELETE request to ${url}`);
+      const response = await authAxios.delete(url, options);
+      return response.data;
+    } catch (error) {
+      console.error(`DELETE ${url} failed:`, error.response?.data || error.message);
+      throw error;
+    }
+  }, [authAxios]);
+  
+  // Utility for form data submissions (file uploads)
+  const postForm = useCallback(async (url, formData, options = {}) => {
+    if (!authAxios) {
+      console.error('API not ready yet');
+      return null;
+    }
+    
+    try {
+      console.log(`Making POST FORM request to ${url}`);
+      const response = await authAxios.post(url, formData, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`POST FORM ${url} failed:`, error.response?.data || error.message);
+      throw error;
+    }
+  }, [authAxios]);
+  
+  return { 
+    get, 
+    post, 
+    put, 
+    delete: del, 
+    postForm,
+    isReady  // Add this to let components know when the API is ready
   };
 }
