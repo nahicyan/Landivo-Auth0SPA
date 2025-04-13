@@ -1,3 +1,4 @@
+// server/routes/residencyRoute.js (updated)
 import express from 'express';
 import { 
     createResidency, 
@@ -8,7 +9,7 @@ import {
     createResidencyWithMultipleFiles 
 } from '../controllers/residencyCntrl.js';
 import { upload } from '../config/multerConfig.js';
-import { jwtCheck, extractUserFromToken, checkRoles } from "../middlewares/authMiddleware.js";
+import { jwtCheck, extractUserFromToken, checkPermissions } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -17,9 +18,9 @@ router.get("/allresd", getAllResidencies);
 router.get("/:id", getResidency);
 router.get("/:id/image", getResidencyImages);
 
-// Protected routes - accessible to Admins and Agents
-router.post("/create", jwtCheck, extractUserFromToken, checkRoles(['Admin', 'Agent']), createResidency);
-router.post("/createWithFile", jwtCheck, extractUserFromToken, checkRoles(['Admin', 'Agent']), upload.array("images", 10), createResidencyWithMultipleFiles);
-router.put("/update/:id", jwtCheck, extractUserFromToken, checkRoles(['Admin', 'Agent']), upload.array("images", 10), updateResidency);
+// Protected routes - accessible to users with specific permissions
+router.post("/create", jwtCheck, extractUserFromToken, checkPermissions(['write:properties']), createResidency);
+router.post("/createWithFile", jwtCheck, extractUserFromToken, checkPermissions(['write:properties']), upload.array("images", 10), createResidencyWithMultipleFiles);
+router.put("/update/:id", jwtCheck, extractUserFromToken, checkPermissions(['write:properties']), upload.array("images", 10), updateResidency);
 
 export { router as residencyRoute };

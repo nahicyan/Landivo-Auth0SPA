@@ -5,16 +5,32 @@ import {
   getQualificationsForProperty,
   getAllQualifications
 } from "../controllers/qualificationCntrl.js";
+import { 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions 
+} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Create a new qualification entry
-router.post("/create", createQualification);
+// Create a new qualification entry - no special permissions required
+// Just authentication is enough as any user can submit qualification
+router.post("/create", jwtCheck, extractUserFromToken, createQualification);
 
-// Get qualifications for a specific property
-router.get("/property/:propertyId", getQualificationsForProperty);
+// Get qualifications for a specific property - requires read:qualifications permission
+router.get("/property/:propertyId", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['read:qualifications']), 
+  getQualificationsForProperty
+);
 
-// Get all qualifications with pagination and filtering
-router.get("/all", getAllQualifications);
+// Get all qualifications with pagination and filtering - requires read:qualifications permission
+router.get("/all", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['read:qualifications']), 
+  getAllQualifications
+);
 
 export { router as qualificationRoute };

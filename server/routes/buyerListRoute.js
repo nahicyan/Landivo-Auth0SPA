@@ -1,3 +1,4 @@
+// server/routes/buyerListRoute.js
 import express from "express";
 import {
   getAllBuyerLists,
@@ -9,31 +10,73 @@ import {
   removeBuyersFromList,
   sendEmailToList
 } from "../controllers/buyerListCntrl.js";
+import { 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions 
+} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Get all buyer lists
-router.get("/", getAllBuyerLists);
+// All routes require authentication and appropriate permissions
 
-// Get a specific buyer list with its members
-router.get("/:id", getBuyerList);
+// Read operations - require read:buyers permission
+router.get("/", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['read:buyers']), 
+  getAllBuyerLists
+);
 
-// Create a new buyer list
-router.post("/", createBuyerList);
+router.get("/:id", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['read:buyers']), 
+  getBuyerList
+);
 
-// Update a buyer list
-router.put("/:id", updateBuyerList);
+// Write operations - require write:buyers permission
+router.post("/", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['write:buyers']), 
+  createBuyerList
+);
 
-// Delete a buyer list
-router.delete("/:id", deleteBuyerList);
+router.put("/:id", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['write:buyers']), 
+  updateBuyerList
+);
 
-// Add buyers to a list
-router.post("/:id/add-buyers", addBuyersToList);
+router.post("/:id/add-buyers", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['write:buyers']), 
+  addBuyersToList
+);
 
-// Remove buyers from a list
-router.post("/:id/remove-buyers", removeBuyersFromList);
+router.post("/:id/remove-buyers", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['write:buyers']), 
+  removeBuyersFromList
+);
 
-// Send email to list members
-router.post("/:id/send-email", sendEmailToList);
+router.post("/:id/send-email", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['write:buyers']), 
+  sendEmailToList
+);
+
+// Delete operations - require delete:buyers permission
+router.delete("/:id", 
+  jwtCheck, 
+  extractUserFromToken, 
+  checkPermissions(['delete:buyers']), 
+  deleteBuyerList
+);
 
 export { router as buyerListRoute };

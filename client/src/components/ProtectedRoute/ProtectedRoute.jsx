@@ -3,15 +3,35 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/components/hooks/useAuth';
 
-// allowedRoles: array of role strings that can access this route
-const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const { isAuthenticated, isLoading, userRoles, user } = useAuth();
+/**
+ * Protected route component that checks for authentication and authorization
+ * 
+ * @param {Object} props - Component props
+ * @param {ReactNode} props.children - The protected content
+ * @param {string[]} [props.requiredPermissions=[]] - Permissions required to access this route
+ * @param {boolean} [props.fallbackToRoles=true] - Whether to fall back to role-based checks if permission check fails
+ * @param {string[]} [props.allowedRoles=[]] - Roles allowed to access this route (used if fallbackToRoles is true)
+ * @returns {ReactNode} Protected content or redirect
+ */
+const ProtectedRoute = ({ 
+  children, 
+  requiredPermissions = [], 
+  fallbackToRoles = true, 
+  allowedRoles = [] 
+}) => {
+  const { 
+    isAuthenticated, 
+    isLoading, 
+    userRoles, 
+    userPermissions, 
+    user 
+  } = useAuth();
   const location = useLocation();
 
   // Create a detailed loading message for debugging
   const getLoadingMessage = () => {
     if (!user) return "Waiting for user information...";
-    if (!userRoles || userRoles.length === 0) return "Waiting for role information...";
+    if (!userPermissions || userPermissions.length === 0) return "Waiting for permission information...";
     return "Verifying access...";
   };
 
@@ -23,14 +43,25 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       isLoading,
       userRoles,
       allowedRoles,
+      userPermissions,
+      requiredPermissions,
       user: user ? `${user.name} (${user.email})` : 'No user'
     });
 
-    if (!isLoading && allowedRoles.length > 0) {
-      const hasRole = userRoles.some(role => allowedRoles.includes(role));
-      console.log(`Access ${hasRole ? 'GRANTED' : 'DENIED'} - User roles: [${userRoles.join(', ')}], Required roles: [${allowedRoles.join(', ')}]`);
+    if (!isLoading) {
+      // Check permissions first
+      if (requiredPermissions.length > 0) {
+        const hasPermission = userPermissions.some(perm => requiredPermissions.includes(perm));
+        console.log(`Permission check: ${hasPermission ? 'GRANTED' : 'DENIED'} - User permissions: [${userPermissions.join(', ')}], Required permissions: [${requiredPermissions.join(', ')}]`);
+      }
+      
+      // Fall back to roles if needed
+      if (fallbackToRoles && allowedRoles.length > 0) {
+        const hasRole = userRoles.some(role => allowedRoles.includes(role));
+        console.log(`Role fallback check: ${hasRole ? 'GRANTED' : 'DENIED'} - User roles: [${userRoles.join(', ')}], Allowed roles: [${allowedRoles.join(', ')}]`);
+      }
     }
-  }, [isAuthenticated, isLoading, userRoles, allowedRoles, location.pathname, user]);
+  }, [isAuthenticated, isLoading, userRoles, allowedRoles, userPermissions, requiredPermissions, location.pathname, user, fallbackToRoles]);
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -48,13 +79,24 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
   
-  // If no specific roles are required OR user has at least one of the required roles
-  const hasRequiredRole = 
-    allowedRoles.length === 0 || 
-    userRoles.some(role => allowedRoles.includes(role));
+  // Check permissions first
+  let hasAccess = false;
   
-  if (!hasRequiredRole) {
-    console.log('User lacks required role, redirecting to unauthorized');
+  // If permission check is required
+  if (requiredPermissions.length > 0) {
+    hasAccess = userPermissions.some(perm => requiredPermissions.includes(perm));
+  } 
+  // If permission check fails, fall back to role check if fallbackToRoles is true
+  else if (!hasAccess && fallbackToRoles && allowedRoles.length > 0) {
+    hasAccess = userRoles.some(role => allowedRoles.includes(role));
+  }
+  // If no specific permissions or roles are required, grant access
+  else if (requiredPermissions.length === 0 && (!fallbackToRoles || allowedRoles.length === 0)) {
+    hasAccess = true;
+  }
+  
+  if (!hasAccess) {
+    console.log('User lacks required permissions/roles, redirecting to unauthorized');
     // Redirect to unauthorized page
     return <Navigate to="/unauthorized" replace />;
   }

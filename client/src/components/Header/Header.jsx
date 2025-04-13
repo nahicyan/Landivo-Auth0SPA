@@ -16,22 +16,25 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Menu, X, User, LogOut, Settings } from "lucide-react";
-import { useAuth } from '@/components/hooks/useAuth'; // Import the updated hook
+import { useAuth } from '@/components/hooks/useAuth';
+import { usePermissions } from '@/components/Auth0/PermissionsContext';
+import PermissionGuard from '@/components/Auth0/PermissionGuard';
+import { PERMISSIONS } from '@/utils/permissions';
 
 const Header = () => {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Use the enhanced Auth hook
+  // Use the enhanced Auth hook and permissions
   const { 
     isAuthenticated, 
     isLoading, 
     user,
-    isAdmin,
-    isAgent,
     loginWithRedirect, 
     logout 
   } = useAuth();
+  
+  const { check } = usePermissions();
 
   const handleLogin = () => {
     loginWithRedirect();
@@ -94,27 +97,29 @@ const Header = () => {
                     </Link>
                   ))}
                   
-                  {/* Admin/Agent items in mobile menu */}
-                  {(isAdmin || isAgent) && (
+                  {/* Admin/Agent items in mobile menu - based on permissions */}
+                  {(check.canAccessAdmin || check.canWriteProperties) && (
                     <>
                       <div className="pt-2 mt-4 border-t border-[#e3a04f]/40">
                         <p className="text-sm text-[#324c48]/60 mb-2">Management</p>
-                        {isAdmin && (
+                        
+                        <PermissionGuard permission={PERMISSIONS.ACCESS_ADMIN}>
                           <Link 
                             to="/admin"
                             className="block text-lg font-medium text-[#324c48] hover:text-[#D4A017]"
                           >
                             Admin Dashboard
                           </Link>
-                        )}
-                        {(isAdmin || isAgent) && (
+                        </PermissionGuard>
+                        
+                        <PermissionGuard permission={PERMISSIONS.WRITE_PROPERTIES}>
                           <Link 
                             to="/agent/add-property"
                             className="block text-lg font-medium text-[#324c48] hover:text-[#D4A017] mt-2"
                           >
                             Add Property
                           </Link>
-                        )}
+                        </PermissionGuard>
                       </div>
                     </>
                   )}
@@ -224,8 +229,8 @@ const Header = () => {
                     </Link>
                   </DropdownMenuItem>
                   
-                  {/* Show Admin Dashboard link only to Admins */}
-                  {isAdmin && (
+                  {/* Show Admin Dashboard link only with access:admin permission */}
+                  <PermissionGuard permission={PERMISSIONS.ACCESS_ADMIN}>
                     <DropdownMenuItem asChild>
                       <Link
                         to="/admin"
@@ -235,10 +240,10 @@ const Header = () => {
                         Admin Dashboard
                       </Link>
                     </DropdownMenuItem>
-                  )}
+                  </PermissionGuard>
                   
-                  {/* Show property management links to Admins and Agents */}
-                  {(isAdmin || isAgent) && (
+                  {/* Show property management links with write:properties permission */}
+                  <PermissionGuard permission={PERMISSIONS.WRITE_PROPERTIES}>
                     <DropdownMenuItem asChild>
                       <Link
                         to="/agent/add-property"
@@ -261,7 +266,7 @@ const Header = () => {
                         Add Property
                       </Link>
                     </DropdownMenuItem>
-                  )}
+                  </PermissionGuard>
                   
                   <DropdownMenuItem
                     onClick={handleLogout}

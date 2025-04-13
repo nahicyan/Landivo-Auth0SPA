@@ -1,16 +1,37 @@
-import React from 'react';
+// import React from 'react';
+import React, { useState, useEffect } from "react";
 import { useAuth0 } from '@auth0/auth0-react';
+import { useAuth } from '@/components/hooks/useAuth';
+import { usePermissions } from '@/components/Auth0/PermissionsContext';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, Mail, User, MapPin, LogOut } from 'lucide-react';
+import { 
+  CalendarClock, 
+  Mail, 
+  User, 
+  Shield, 
+  Key, 
+  Users, 
+  Home, 
+  FileText, 
+  LogOut 
+} from 'lucide-react';
 import Auth0DebugComponent from '@/components/Auth0/Auth0DebugComponent';
 
 const Profile = () => {
-  const { user, isLoading, isAuthenticated, logout } = useAuth0();
+  const { 
+    user, 
+    isLoading, 
+    isAuthenticated, 
+    logout, 
+    getAccessTokenSilently // Add this
+  } = useAuth0();
+  const { userRoles, userPermissions } = useAuth();
+  const permissions = usePermissions();
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -33,6 +54,57 @@ const Profile = () => {
   const createdAt = user.created_at
     ? new Date(user.created_at).toLocaleDateString()
     : 'Not available';
+    
+  // Group permissions by category
+  const permissionCategories = {
+    user: userPermissions.filter(p => p.includes('user')),
+    property: userPermissions.filter(p => p.includes('propert')),
+    buyer: userPermissions.filter(p => p.includes('buyer')),
+    offer: userPermissions.filter(p => p.includes('offer')),
+    qualification: userPermissions.filter(p => p.includes('qualification')),
+    admin: userPermissions.filter(p => p.includes('admin')),
+    other: userPermissions.filter(p => 
+      !p.includes('user') && 
+      !p.includes('propert') && 
+      !p.includes('buyer') && 
+      !p.includes('offer') && 
+      !p.includes('qualification') && 
+      !p.includes('admin')
+    )
+  };
+
+  // Add this to your Profile.jsx temporarily to debug
+useEffect(() => {
+  const getAndDecodeToken = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      // Log the raw token
+      console.log('Raw token:', token);
+      
+      // Log the parsed token parts
+      const tokenParts = token.split('.');
+      if (tokenParts.length === 3) {
+        const header = JSON.parse(atob(tokenParts[0]));
+        const payload = JSON.parse(atob(tokenParts[1]));
+        console.log('Token header:', header);
+        console.log('Token payload:', payload);
+        
+        // Check for permissions in various locations
+        const namespace = 'https://landivo.com';
+        console.log('Looking for permissions in these locations:');
+        console.log(`1. permissions:`, payload.permissions);
+        console.log(`2. ${namespace}/permissions:`, payload[`${namespace}/permissions`]);
+        console.log(`3. Inside namespace object:`, payload[namespace]?.permissions);
+      }
+    } catch (error) {
+      console.error('Error decoding token:', error);
+    }
+  };
+  
+  if (isAuthenticated) {
+    getAndDecodeToken();
+  }
+}, [isAuthenticated, getAccessTokenSilently]);
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
@@ -115,13 +187,34 @@ const Profile = () => {
                     <p className="text-gray-700">{user.locale}</p>
                   </div>
                 )}
+                
+                {/* Roles */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">
+                    <div className="flex items-center">
+                      <Shield className="w-4 h-4 mr-2 text-[#3f4f24]" />
+                      Roles
+                    </div>
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {userRoles && userRoles.length > 0 ? (
+                      userRoles.map((role) => (
+                        <Badge 
+                          key={role}
+                          className="bg-[#e8efdc] text-[#3f4f24] hover:bg-[#e8efdc]"
+                        >
+                          {role}
+                        </Badge>
+                      ))
+                    ) : (
+                      <span className="text-gray-500 text-sm italic">No roles assigned</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Right Column */}
-              <div className="space-y-4">
-                <div className="my-4">
-                  <Auth0DebugComponent />
-                </div>
+              <div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Authentication Method</h3>
                   <Badge className="capitalize bg-blue-100 text-blue-800 hover:bg-blue-100">
@@ -129,7 +222,7 @@ const Profile = () => {
                   </Badge>
                 </div>
 
-                <div>
+                <div className="mt-4">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Account Created</h3>
                   <div className="flex items-center">
                     <CalendarClock className="w-4 h-4 mr-2 text-gray-400" />
@@ -138,11 +231,168 @@ const Profile = () => {
                 </div>
 
                 {user.updated_at && (
-                  <div>
+                  <div className="mt-4">
                     <h3 className="text-sm font-medium text-gray-500 mb-2">Last Updated</h3>
                     <p className="text-gray-700">
                       {new Date(user.updated_at).toLocaleDateString()}
                     </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Permissions Section */}
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center mb-4">
+                <Key className="w-5 h-5 mr-2 text-[#324c48]" />
+                Permissions
+              </h2>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* User Permissions */}
+                {permissionCategories.user.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                      <Users className="w-4 h-4 mr-2 text-[#324c48]" />
+                      User Management
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {permissionCategories.user.map(perm => (
+                        <Badge 
+                          key={perm}
+                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Property Permissions */}
+                {permissionCategories.property.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                      <Home className="w-4 h-4 mr-2 text-[#324c48]" />
+                      Property Management
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {permissionCategories.property.map(perm => (
+                        <Badge 
+                          key={perm}
+                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Buyer Permissions */}
+                {permissionCategories.buyer.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                      <User className="w-4 h-4 mr-2 text-[#324c48]" />
+                      Buyer Management
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {permissionCategories.buyer.map(perm => (
+                        <Badge 
+                          key={perm}
+                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Offer Permissions */}
+                {permissionCategories.offer.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                      <FileText className="w-4 h-4 mr-2 text-[#324c48]" />
+                      Offer Management
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {permissionCategories.offer.map(perm => (
+                        <Badge 
+                          key={perm}
+                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Qualification Permissions */}
+                {permissionCategories.qualification.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                      <FileText className="w-4 h-4 mr-2 text-[#324c48]" />
+                      Qualification Management
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {permissionCategories.qualification.map(perm => (
+                        <Badge 
+                          key={perm}
+                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Admin Permissions */}
+                {permissionCategories.admin.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                      <Shield className="w-4 h-4 mr-2 text-[#324c48]" />
+                      Admin Access
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {permissionCategories.admin.map(perm => (
+                        <Badge 
+                          key={perm}
+                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Other Permissions */}
+                {permissionCategories.other.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
+                      <Key className="w-4 h-4 mr-2 text-[#324c48]" />
+                      Other Permissions
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {permissionCategories.other.map(perm => (
+                        <Badge 
+                          key={perm}
+                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
+                        >
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* No Permissions */}
+                {userPermissions.length === 0 && (
+                  <div className="col-span-2 text-center py-4">
+                    <p className="text-gray-500 italic">No permissions assigned</p>
                   </div>
                 )}
               </div>
@@ -184,6 +434,7 @@ const ProfileSkeleton = () => (
               <Skeleton className="h-20 w-full" />
             </div>
           </div>
+          <Skeleton className="h-40 w-full mt-8" />
         </div>
       </CardContent>
       <CardFooter className="bg-gray-50 py-4 border-t">

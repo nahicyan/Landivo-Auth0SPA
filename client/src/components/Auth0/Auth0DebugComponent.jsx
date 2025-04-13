@@ -9,6 +9,7 @@ export default function Auth0DebugComponent() {
     isLoading, 
     user, 
     userRoles, 
+    userPermissions,
     getToken,
     isAdmin,
     isAgent 
@@ -93,6 +94,13 @@ export default function Auth0DebugComponent() {
         </p>
         <p className="text-green-700">
           <strong>Is Agent:</strong> {isAgent ? 'Yes' : 'No'}
+        </p>
+      </div>
+      
+      <div className="mb-3">
+        <p className="text-sm text-gray-600">Permissions Information:</p>
+        <p className="text-green-700">
+          <strong>User Permissions:</strong> {userPermissions.length ? userPermissions.join(', ') : 'No permissions found'}
         </p>
       </div>
       
