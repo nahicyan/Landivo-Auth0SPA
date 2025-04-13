@@ -16,6 +16,7 @@ import Property from "./pages/Property/Property";
 import Offer from "./components/Offer/Offer";
 import AddProperty from "./pages/AddProperty/AddProperty";
 import { UserProvider } from "./utils/UserContext";
+import { VipBuyerProvider } from "./utils/VipBuyerContext"; // Import the VipBuyerProvider
 import EditProperty from "./pages/EditProperty/EditProperty";
 import DFW from "./pages/DFW/DFW";
 import Austin from "./pages/Austin/Austin";
@@ -69,167 +70,218 @@ function App() {
           <BrowserRouter>
             <Auth0ProviderWithNavigate>
               <PermissionsProvider>
-                <ScrollToTop />
-                <Routes>
-                  {/* Public routes - accessible to all */}
-                  <Route element={<Layout />}>
-                    <Route path="/" element={<Site />} />
-                    <Route path="/properties">
-                      <Route index element={<Properties />} />
-                      <Route path=":propertyId" element={<Property />} />
-                      <Route path=":propertyId/offers" element={<OfferTable />} />
-                      {/* Protected route - only accessible to authenticated users */}
-                      <Route path=":propertyId/qualify" element={
-                        <ProtectedRoute>
-                          <Qualify />
-                        </ProtectedRoute>
-                      } />
+                {/* Add VipBuyerProvider to make VIP status available throughout the app */}
+                <VipBuyerProvider>
+                  <ScrollToTop />
+                  <Routes>
+                    {/* Public routes - accessible to all */}
+                    <Route element={<Layout />}>
+                      <Route path="/" element={<Site />} />
+                      <Route path="/properties">
+                        <Route index element={<Properties />} />
+                        <Route path=":propertyId" element={<Property />} />
+                        <Route path=":propertyId/offers" element={<OfferTable />} />
+                        {/* Protected route - only accessible to authenticated users */}
+                        <Route
+                          path=":propertyId/qualify"
+                          element={
+                            <ProtectedRoute>
+                              <Qualify />
+                            </ProtectedRoute>
+                          }
+                        />
+                      </Route>
+                      <Route path="/sell" element={<Sell />} />
+                      <Route path="/financing" element={<Financing />} />
+                      <Route path="/support" element={<Support />} />
+                      <Route path="/about-us" element={<AboutUs />} />
+                      <Route path="/subscription" element={<Subscription />} />
+                      <Route path="/vip-signup" element={<VipSignupForm />} />
+                      <Route path="/vip-signup-success" element={<VipSignupSuccess />} />
+                      <Route path="/DFW" element={<DFW />} />
+                      <Route path="/Austin" element={<Austin />} />
+                      <Route path="/Houston" element={<Houston />} />
+                      <Route path="/SanAntonio" element={<SanAntonio />} />
+                      <Route path="/OtherLands" element={<OtherLands />} />
+                      <Route path="/unauthorized" element={<Unauthorized />} />
+                      
+                      {/* Protected route for profile */}
+                      <Route
+                        path="/profile"
+                        element={
+                          <ProtectedRoute>
+                            <Profile />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/qualify"
+                        element={
+                          <ProtectedRoute>
+                            <Qualify />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/CreateUservbtwP44jbX0FKKYUdHBGGCcYqenvNlYdH1Sj7K1dSD3kRo1Pib5VXQWb59a7CkQZ4DiQuu5r1t9I0uXVUbYjvvj4E1djRIkXRh40Uvbz2jSz6PZKguOjGhi7avF1b"
+                        element={<CreateUser />}
+                      />
                     </Route>
-                    <Route path="/sell" element={<Sell />} />
-                    <Route path="/financing" element={<Financing />} />
-                    <Route path="/support" element={<Support />} />
-                    <Route path="/about-us" element={<AboutUs />} />
-                    <Route path="/subscription" element={<Subscription />} />
-                    <Route path="/vip-signup" element={<VipSignupForm />} />
-                    <Route path="/vip-signup-success" element={<VipSignupSuccess />} />
-                    <Route path="/DFW" element={<DFW />} />
-                    <Route path="/Austin" element={<Austin />} />
-                    <Route path="/Houston" element={<Houston />} />
-                    <Route path="/SanAntonio" element={<SanAntonio />} />
-                    <Route path="/OtherLands" element={<OtherLands />} />
-                    <Route path="/unauthorized" element={<Unauthorized />} />
-                    
-                    {/* Protected route for profile */}
-                    <Route path="/profile" element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/qualify" element={
-                      <ProtectedRoute>
-                        <Qualify />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/CreateUservbtwP44jbX0FKKYUdHBGGCcYqenvNlYdH1Sj7K1dSD3kRo1Pib5VXQWb59a7CkQZ4DiQuu5r1t9I0uXVUbYjvvj4E1djRIkXRh40Uvbz2jSz6PZKguOjGhi7avF1b" element={<CreateUser />} />
-                  </Route>
 
-                  {/* Admin routes - using permissions instead of roles */}
-                  <Route path="/admin" element={
-                    <ProtectedRoute 
-                      requiredPermissions={[PERMISSIONS.ACCESS_ADMIN]}
-                      fallbackToRoles={true}
-                      allowedRoles={['Admin']}
+                    {/* Admin routes - using permissions instead of roles */}
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute
+                          requiredPermissions={[PERMISSIONS.ACCESS_ADMIN]}
+                          fallbackToRoles={true}
+                          allowedRoles={['Admin']}
+                        >
+                          <AdminLayout />
+                        </ProtectedRoute>
+                      }
                     >
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }>
-                    <Route index element={<Admin />} />
-                    <Route path="users" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_USERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <AdminUsers />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="users/:userId" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_USERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <UserDetail />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="buyers" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_BUYERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <AdminBuyers />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="buyers/create" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.WRITE_BUYERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <CreateBuyer />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="buyers/:buyerId" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_BUYERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <BuyerDetail />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="buyers/:buyerId/edit" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.WRITE_BUYERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <EditBuyer />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="buyers/:buyerId/offers" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_OFFERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <BuyerOffers />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="buyer-lists" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_BUYERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <BuyerLists />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="qualifications" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_QUALIFICATIONS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <QualificationsDashboard />
-                      </ProtectedRoute>
-                    } />
-                    <Route path="financing/applications" element={
-                      <ProtectedRoute 
-                        requiredPermissions={[PERMISSIONS.READ_OFFERS]}
-                        fallbackToRoles={true}
-                        allowedRoles={['Admin']}
-                      >
-                        <OfferTable />
-                      </ProtectedRoute>
-                    } />
-                  </Route>
+                      <Route index element={<Admin />} />
+                      <Route
+                        path="users"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_USERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <AdminUsers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="users/:userId"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_USERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <UserDetail />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="buyers"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_BUYERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <AdminBuyers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="buyers/create"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.WRITE_BUYERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <CreateBuyer />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="buyers/:buyerId"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_BUYERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <BuyerDetail />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="buyers/:buyerId/edit"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.WRITE_BUYERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <EditBuyer />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="buyers/:buyerId/offers"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_OFFERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <BuyerOffers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="buyer-lists"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_BUYERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <BuyerLists />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="qualifications"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_QUALIFICATIONS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <QualificationsDashboard />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="financing/applications"
+                        element={
+                          <ProtectedRoute
+                            requiredPermissions={[PERMISSIONS.READ_OFFERS]}
+                            fallbackToRoles={true}
+                            allowedRoles={['Admin']}
+                          >
+                            <OfferTable />
+                          </ProtectedRoute>
+                        }
+                      />
+                    </Route>
 
-                  {/* Agent routes - using permissions instead of roles */}
-                  <Route path="/agent" element={
-                    <ProtectedRoute 
-                      requiredPermissions={[PERMISSIONS.WRITE_PROPERTIES]}
-                      fallbackToRoles={true}
-                      allowedRoles={['Admin', 'Agent']}
+                    {/* Agent routes - using permissions instead of roles */}
+                    <Route
+                      path="/agent"
+                      element={
+                        <ProtectedRoute
+                          requiredPermissions={[PERMISSIONS.WRITE_PROPERTIES]}
+                          fallbackToRoles={true}
+                          allowedRoles={['Admin', 'Agent']}
+                        >
+                          <AdminLayout />
+                        </ProtectedRoute>
+                      }
                     >
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }>
-                    <Route path="add-property" element={<AddProperty />} />
-                    <Route path="edit-property/:propertyId" element={<EditProperty />} />
-                  </Route>
-                </Routes>
+                      <Route path="add-property" element={<AddProperty />} />
+                      <Route path="edit-property/:propertyId" element={<EditProperty />} />
+                    </Route>
+                  </Routes>
+                </VipBuyerProvider>
               </PermissionsProvider>
             </Auth0ProviderWithNavigate>
           </BrowserRouter>

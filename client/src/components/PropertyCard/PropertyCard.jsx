@@ -2,10 +2,12 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatPrice } from "../../utils/format";
+import { useVipBuyer } from "@/utils/VipBuyerContext";
 const serverURL = import.meta.env.VITE_SERVER_URL;
 
 export default function SlickPropertyCard({ card }) {
   const navigate = useNavigate();
+  const { isVipBuyer } = useVipBuyer();
 
   // Guard clause to handle undefined card prop
   if (!card) {
@@ -34,6 +36,11 @@ export default function SlickPropertyCard({ card }) {
   const formattedPrice = card.askingPrice 
     ? formatPrice(card.askingPrice) 
     : "0";
+
+  // Safe formatted discount price
+  const formattedDisPrice = card.disPrice 
+    ? formatPrice(card.disPrice) 
+    : null;
 
   // Safely calculate minimum monthly payment
   const getMonthlyPayment = () => {
@@ -111,10 +118,22 @@ export default function SlickPropertyCard({ card }) {
 
         {/* Right Section (1/3 of the card) */}
         <div className="w-full basis-[27%] flex flex-col items-end justify-start">
-          {/* Price */}
-          <span className="text-[#517b75] text-lg font-semibold tracking-tight">
-            ${formattedPrice}
-          </span>
+          {/* Price - Show discount price for VIP buyers if available */}
+          {isVipBuyer && formattedDisPrice ? (
+            <div className="flex flex-wrap items-center justify-end">
+              <span className="text-gray-500 text-sm line-through mr-2">
+                ${formattedPrice}
+              </span>
+              <span className="text-[#517b75] text-lg font-semibold">
+                ${formattedDisPrice}
+              </span>
+            </div>
+          ) : (
+            <span className="text-[#517b75] text-lg font-semibold tracking-tight">
+              ${formattedPrice}
+            </span>
+          )}
+          
           {card.financing === "Available" && monthlyPayment && (
             <span className="mt-1 text-[#D4A017] text-base font-medium tracking-tighter">
               ${monthlyPayment}/mo

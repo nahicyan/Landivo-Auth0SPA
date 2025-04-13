@@ -822,6 +822,7 @@ export const getBuyerStats = asyncHandler(async (req, res) => {
 });
 
 // 
+
 export const getBuyerByAuth0Id = asyncHandler(async (req, res) => {
   const { auth0Id } = req.query;
   
@@ -839,6 +840,7 @@ export const getBuyerByAuth0Id = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "Buyer not found" });
     }
     
+    // Return buyer data with 200 status
     res.status(200).json(buyer);
   } catch (err) {
     console.error("Error fetching buyer by Auth0 ID:", err);

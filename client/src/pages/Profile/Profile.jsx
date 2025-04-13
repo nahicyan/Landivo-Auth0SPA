@@ -21,6 +21,8 @@ import {
   LogOut 
 } from 'lucide-react';
 import Auth0DebugComponent from '@/components/Auth0/Auth0DebugComponent';
+import { useVipBuyer } from '@/utils/VipBuyerContext'; // New import for VIP Buyer hook
+import { StarIcon } from '@heroicons/react/24/solid'; // New import for VIP Buyer icon
 
 const Profile = () => {
   const { 
@@ -32,6 +34,9 @@ const Profile = () => {
   } = useAuth0();
   const { userRoles, userPermissions } = useAuth();
   const permissions = usePermissions();
+  
+  // Use the VIP Buyer hook
+  const { isVipBuyer, vipBuyerData, isLoading: vipStatusLoading } = useVipBuyer();
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -73,38 +78,38 @@ const Profile = () => {
     )
   };
 
-  // Add this to your Profile.jsx temporarily to debug
-useEffect(() => {
-  const getAndDecodeToken = async () => {
-    try {
-      const token = await getAccessTokenSilently();
-      // Log the raw token
-      console.log('Raw token:', token);
-      
-      // Log the parsed token parts
-      const tokenParts = token.split('.');
-      if (tokenParts.length === 3) {
-        const header = JSON.parse(atob(tokenParts[0]));
-        const payload = JSON.parse(atob(tokenParts[1]));
-        console.log('Token header:', header);
-        console.log('Token payload:', payload);
+  // Debug token data
+  useEffect(() => {
+    const getAndDecodeToken = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        // Log the raw token
+        console.log('Raw token:', token);
         
-        // Check for permissions in various locations
-        const namespace = 'https://landivo.com';
-        console.log('Looking for permissions in these locations:');
-        console.log(`1. permissions:`, payload.permissions);
-        console.log(`2. ${namespace}/permissions:`, payload[`${namespace}/permissions`]);
-        console.log(`3. Inside namespace object:`, payload[namespace]?.permissions);
+        // Log the parsed token parts
+        const tokenParts = token.split('.');
+        if (tokenParts.length === 3) {
+          const header = JSON.parse(atob(tokenParts[0]));
+          const payload = JSON.parse(atob(tokenParts[1]));
+          console.log('Token header:', header);
+          console.log('Token payload:', payload);
+          
+          // Check for permissions in various locations
+          const namespace = 'https://landivo.com';
+          console.log('Looking for permissions in these locations:');
+          console.log(`1. permissions:`, payload.permissions);
+          console.log(`2. ${namespace}/permissions:`, payload[`${namespace}/permissions`]);
+          console.log(`3. Inside namespace object:`, payload[namespace]?.permissions);
+        }
+      } catch (error) {
+        console.error('Error decoding token:', error);
       }
-    } catch (error) {
-      console.error('Error decoding token:', error);
+    };
+    
+    if (isAuthenticated) {
+      getAndDecodeToken();
     }
-  };
-  
-  if (isAuthenticated) {
-    getAndDecodeToken();
-  }
-}, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated, getAccessTokenSilently]);
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
@@ -240,7 +245,26 @@ useEffect(() => {
                 )}
               </div>
             </div>
-            
+
+            {/* VIP Badge section */}
+            {vipStatusLoading ? (
+              <div className="mt-4 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-32"></div>
+              </div>
+            ) : isVipBuyer && (
+              <div className="mt-4 flex items-center">
+                <div className="bg-[#D4A017]/10 border border-[#D4A017] rounded-md px-4 py-2 flex items-center">
+                  <StarIcon className="h-5 w-5 text-[#D4A017] mr-2" />
+                  <div>
+                    <p className="text-[#D4A017] font-semibold">VIP Buyer</p>
+                    <p className="text-sm text-[#324c48]">
+                      Preferred areas: {vipBuyerData?.preferredAreas?.join(', ') || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Permissions Section */}
             <div className="mt-8">
               <h2 className="text-lg font-semibold text-gray-800 flex items-center mb-4">
