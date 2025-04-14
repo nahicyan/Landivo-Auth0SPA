@@ -223,19 +223,19 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       }
     });
     
-    // Get property view details
+    // Get ALL property views without limit
     const propertyViews = await prisma.buyerActivity.findMany({
       where: {
         buyerId,
-        eventType: 'property_view' // Make sure this matches what's sent from the client
+        eventType: 'property_view'
       },
       orderBy: {
         timestamp: 'desc'
-      },
-      take: 10
+      }
+      // No take limit
     });
 
-    // Get search history
+    // Get ALL search history
     const searchHistory = await prisma.buyerActivity.findMany({
       where: {
         buyerId,
@@ -243,11 +243,11 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       },
       orderBy: {
         timestamp: 'desc'
-      },
-      take: 10
+      }
+      // No take limit
     });
     
-    // Get page views
+    // Get ALL page views
     const pageViews = await prisma.buyerActivity.findMany({
       where: {
         buyerId,
@@ -255,20 +255,20 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       },
       orderBy: {
         timestamp: 'desc'
-      },
-      take: 10
+      }
+      // No take limit
     });
     
-    // Get offer submissions
+    // Get ALL offer submissions
     const offerHistory = await prisma.offer.findMany({
       where: { buyerId },
       orderBy: {
         timestamp: 'desc'
-      },
-      take: 10
+      }
+      // No take limit
     });
     
-    // Get click events
+    // Get ALL click events
     const clickEvents = await prisma.buyerActivity.findMany({
       where: {
         buyerId,
@@ -276,11 +276,11 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       },
       orderBy: {
         timestamp: 'desc'
-      },
-      take: 10
+      }
+      // No take limit
     });
     
-    // Get session history
+    // Get ALL session history
     const sessionHistory = await prisma.buyerActivity.findMany({
       where: {
         buyerId,
@@ -290,8 +290,8 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       },
       orderBy: {
         timestamp: 'desc'
-      },
-      take: 20
+      }
+      // No take limit
     });
     
     // Find the most recent activity

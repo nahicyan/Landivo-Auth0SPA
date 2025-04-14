@@ -1,4 +1,4 @@
-// client/src/components/BuyersTable/ActivityDetailView.jsx
+// Updated ActivityDetailView.jsx
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
@@ -70,7 +70,7 @@ const ActivityDetailView = ({ buyer, activityData: initialData = null }) => {
       const detailData = await ActivityDataProvider.getDetailedActivity(
         buyer.id, 
         activityType.type,
-        { limit: 100 }
+        { limit: 100 } // Increased from any previous limit to ensure we get all records
       );
       
       setDetailActivity({
@@ -480,6 +480,12 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
     return Array.isArray(activity[category]) && activity[category].length > 0;
   };
   
+  // Get the actual counts for each activity type
+  const getActivityCount = (type) => {
+    if (!Array.isArray(activity[type])) return 0;
+    return activity[type].length;
+  };
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card className="border border-[#324c48]/20">
@@ -496,7 +502,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Properties viewed:</span>
               <Badge variant="outline" className="bg-blue-50">
-                {hasData('propertyViews') ? activity.propertyViews.length : 0}
+                {getActivityCount('propertyViews')}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -548,7 +554,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Offers made:</span>
               <Badge variant="outline" className="bg-green-50">
-                {hasData('offerHistory') ? activity.offerHistory.length : 0}
+                {getActivityCount('offerHistory')}
               </Badge>
             </div>
             {hasData('offerHistory') ? (
@@ -604,13 +610,13 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Click events:</span>
               <Badge variant="outline" className="bg-purple-50">
-                {hasData('clickEvents') ? activity.clickEvents.length : 0}
+                {getActivityCount('clickEvents')}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Page visits:</span>
               <Badge variant="outline" className="bg-green-50">
-                {hasData('pageVisits') ? activity.pageVisits.length : 0}
+                {getActivityCount('pageVisits')}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -663,7 +669,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Total searches:</span>
               <Badge variant="outline" className="bg-orange-50">
-                {hasData('searchHistory') ? activity.searchHistory.length : 0}
+                {getActivityCount('searchHistory')}
               </Badge>
             </div>
             {hasData('searchHistory') ? (
@@ -712,7 +718,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Emails received:</span>
               <Badge variant="outline" className="bg-indigo-50">
-                {hasData('emailInteractions') ? activity.emailInteractions.length : 0}
+                {getActivityCount('emailInteractions')}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -761,7 +767,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Total sessions:</span>
               <Badge variant="outline" className="bg-gray-50">
-                {hasData('sessionHistory') ? activity.sessionHistory.length : 0}
+                {getActivityCount('sessionHistory')}
               </Badge>
             </div>
             {hasData('sessionHistory') ? (

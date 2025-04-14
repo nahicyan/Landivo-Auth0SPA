@@ -247,12 +247,13 @@ export const recordBuyerActivity = async (events) => {
   }
 };
 
+
 /**
  * Get activity data for a specific buyer
  * @param {string} buyerId - Buyer ID
  * @param {Object} [options] - Query options
  * @param {number} [options.page=1] - Page number
- * @param {number} [options.limit=50] - Results per page
+ * @param {number} [options.limit=500] - Results per page (increased from 50)
  * @param {string} [options.type] - Filter by event type
  * @param {string} [options.startDate] - Filter by start date
  * @param {string} [options.endDate] - Filter by end date
@@ -263,7 +264,7 @@ export const getBuyerActivity = async (buyerId, options = {}) => {
   try {
     const queryParams = new URLSearchParams({
       page: options.page || 1,
-      limit: options.limit || 50,
+      limit: options.limit || 500, // Increased from 50
       ...(options.type && { type: options.type }),
       ...(options.startDate && { startDate: options.startDate }),
       ...(options.endDate && { endDate: options.endDate }),
@@ -276,6 +277,8 @@ export const getBuyerActivity = async (buyerId, options = {}) => {
     handleRequestError(error, "Failed to fetch buyer activity");
   }
 };
+
+
 
 /**
  * Get a summary of buyer activity

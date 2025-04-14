@@ -1,4 +1,4 @@
-// client/src/services/ActivityDataProvider.js
+// Updated ActivityDataProvider.js
 import { getBuyerActivity, getBuyerActivitySummary } from '@/utils/api';
 
 /**
@@ -12,6 +12,7 @@ export default class ActivityDataProvider {
    */
   static async getActivitySummary(buyerId) {
     try {
+      // Request all data without pagination limit
       const summary = await getBuyerActivitySummary(buyerId);
       
       // Transform the API data into the format expected by ActivityDetailView
@@ -225,10 +226,13 @@ export default class ActivityDataProvider {
    */
   static async getDetailedActivity(buyerId, activityType, options = {}) {
     try {
+      // Increase the limit to ensure we get all records
+      const highLimit = options.limit || 500;
+      
       // Fetch specific activity type from API
       const response = await getBuyerActivity(buyerId, {
         type: this._mapActivityTypeToApiType(activityType),
-        limit: options.limit || 50,
+        limit: highLimit,
         page: options.page || 1
       });
       
