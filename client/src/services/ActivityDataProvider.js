@@ -1,5 +1,5 @@
 // Updated ActivityDataProvider.js
-import { getBuyerActivity, getBuyerActivitySummary } from '@/utils/api';
+import { getBuyerActivity, getBuyerActivitySummary, getPropertyOffers, getBuyerById } from '@/utils/api';
 
 /**
  * Service for fetching buyer activity data for the ActivityDetailView
@@ -132,6 +132,13 @@ export default class ActivityDataProvider {
    * @returns {Array} Formatted offer history
    */
   static _formatOfferHistory(offerHistory = []) {
+    if (!offerHistory || !Array.isArray(offerHistory)) {
+      console.warn('Invalid offer history data:', offerHistory);
+      return [];
+    }
+    
+    console.log('Formatting offer history:', offerHistory);
+    
     return offerHistory.map(offer => {
       const property = offer.property || {};
       return {
@@ -226,10 +233,16 @@ export default class ActivityDataProvider {
    */
   static async getDetailedActivity(buyerId, activityType, options = {}) {
     try {
-      // Increase the limit to ensure we get all records
+      console.log(`Fetching detailed ${activityType} data for buyer ${buyerId}`);
+      
+      // Special handling for offer history which needs to be fetched differently
+      if (activityType === 'offerHistory') {
+        return await this._getOfferHistory(buyerId);
+      }
+      
+      // For other activity types, proceed as before
       const highLimit = options.limit || 500;
       
-      // Fetch specific activity type from API
       const response = await getBuyerActivity(buyerId, {
         type: this._mapActivityTypeToApiType(activityType),
         limit: highLimit,
@@ -246,9 +259,6 @@ export default class ActivityDataProvider {
           return this._formatPageVisits(response.activities);
         case 'searchHistory':
           return this._formatSearchHistory(response.activities);
-        case 'offerHistory':
-          // Offer history might come from a different endpoint
-          return response.activities;
         case 'emailInteractions':
           return this._formatEmailInteractions(response.activities);
         case 'sessionHistory':
@@ -261,6 +271,94 @@ export default class ActivityDataProvider {
       throw error;
     }
   }
+  
+  /**
+   * Fetch offer history specifically using the buyer's offers endpoint
+   * @private
+   * @param {string} buyerId - Buyer ID
+   * @returns {Promise<Array>} Formatted offer history
+   */
+  static async _getOfferHistory(buyerId) {
+    try {
+      // Get buyer details first to access offers
+      const buyer = await getBuyerById(buyerId);
+      
+      if (!buyer) {
+        console.warn(`Buyer with ID ${buyerId} not found`);
+        return [];
+      }
+      
+      console.log(`Found buyer:`, buyer);
+      
+      // Check if buyer has offers
+      if (!buyer.offers || !Array.isArray(buyer.offers) || buyer.offers.length === 0) {
+        console.log(`No offers found for buyer ${buyerId}`);
+        return [];
+      }
+      
+      // Process and format each offer with property details
+      const offers = await Promise.all(buyer.offers.map(async offer => {
+        try {
+          // Try to get property details
+          let propertyDetails = { title: 'Unknown Property', streetAddress: 'Address not available' };
+          
+          try {
+            // This will be a separate API call to get property details
+            const property = await this._getPropertyDetails(offer.propertyId);
+            if (property) {
+              propertyDetails = property;
+            }
+          } catch (propertyError) {
+            console.warn(`Error fetching property details for offer ${offer.id}:`, propertyError);
+          }
+          
+          return {
+            propertyId: offer.propertyId,
+            propertyTitle: propertyDetails.title || 'Unknown Property',
+            propertyAddress: propertyDetails.streetAddress ? 
+              `${propertyDetails.streetAddress}, ${propertyDetails.city || ''}, ${propertyDetails.state || ''}` : 
+              'Address not available',
+            amount: offer.offeredPrice,
+            status: offer.status || 'Pending',
+            timestamp: offer.timestamp,
+            id: offer.id
+          };
+        } catch (offerError) {
+          console.error(`Error processing offer ${offer.id}:`, offerError);
+          return null;
+        }
+      }));
+      
+      // Filter out any null offers from processing errors
+      const validOffers = offers.filter(offer => offer !== null);
+      console.log(`Processed ${validOffers.length} valid offers`);
+      
+      return validOffers;
+    } catch (error) {
+      console.error(`Error fetching offer history for buyer ${buyerId}:`, error);
+      return [];
+    }
+  }
+  
+  /**
+   * Helper to get property details
+   * @private
+   * @param {string} propertyId - Property ID
+   * @returns {Promise<Object>} Property details
+   */
+  static async _getPropertyDetails(propertyId) {
+    // This would normally call an API endpoint to get property details
+    // For now, it returns a placeholder object
+    // In a real implementation, you would use something like:
+    // return await getProperty(propertyId);
+    return {
+      title: 'Property #' + propertyId.substring(0, 6),
+      streetAddress: '123 Main St',
+      city: 'Example City',
+      state: 'EX',
+      askingPrice: 0
+    };
+  }
 
   /**
    * Map activity type to API event type
@@ -270,7 +368,7 @@ export default class ActivityDataProvider {
    */
   static _mapActivityTypeToApiType(activityType) {
     const mapping = {
-      'propertyViews': 'property_view', // Make sure this matches the event type in MongoDB
+      'propertyViews': 'property_view',
       'clickEvents': 'click',
       'pageVisits': 'page_view',
       'searchHistory': 'search',

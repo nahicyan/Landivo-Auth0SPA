@@ -261,6 +261,8 @@ const SearchAnalytics = ({ searchData }) => {
   );
 };
 
+// Updated ActivityDetail component in ActivityDetailView.jsx
+
 /**
  * Activity Detail Component - Shows a detailed breakdown of a specific activity
  */
@@ -270,7 +272,7 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
       title: "Property Views",
       icon: <Eye className="h-5 w-5 text-blue-500" />,
       render: (item) => (
-        <div key={item.timestamp} className="border rounded-md p-3 mb-2 bg-white">
+        <div key={item.timestamp || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
           <div className="font-medium text-[#324c48]">{item.propertyTitle}</div>
           <div className="text-sm text-gray-500">{item.propertyAddress}</div>
           <div className="flex justify-between mt-1 text-sm">
@@ -285,7 +287,7 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
       title: "Click Events",
       icon: <MousePointer className="h-5 w-5 text-purple-500" />,
       render: (item) => (
-        <div key={item.timestamp} className="border rounded-md p-3 mb-2 bg-white">
+        <div key={item.timestamp || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
           <div className="font-medium text-[#324c48]">{item.element}</div>
           <div className="text-sm text-gray-500">{item.page}</div>
           <div className="text-sm mt-1">{format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}</div>
@@ -296,7 +298,7 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
       title: "Page Visits",
       icon: <Navigation className="h-5 w-5 text-green-500" />,
       render: (item) => (
-        <div key={item.timestamp} className="border rounded-md p-3 mb-2 bg-white">
+        <div key={item.timestamp || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
           <div className="font-medium text-[#324c48]">{item.url}</div>
           <div className="flex justify-between mt-1 text-sm">
             <span>{format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}</span>
@@ -305,12 +307,11 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
         </div>
       )
     },
-
     searchHistory: {
       title: "Search History",
       icon: <Search className="h-5 w-5 text-orange-500" />,
       render: (item) => (
-        <div key={item.timestamp} className="border rounded-md p-3 mb-2 bg-white">
+        <div key={item.timestamp || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
           <div className="flex justify-between">
             <div className="font-medium text-[#324c48]">"{item.query}"</div>
             {item.searchType && (
@@ -344,21 +345,26 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
       title: "Offer History",
       icon: <DollarSign className="h-5 w-5 text-green-600" />,
       render: (item) => (
-        <div key={item.timestamp} className="border rounded-md p-3 mb-2 bg-white">
+        <div key={item.id || item.timestamp || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
           <div className="font-medium text-[#324c48]">{item.propertyTitle}</div>
           <div className="text-sm text-gray-500">{item.propertyAddress}</div>
           <div className="flex justify-between mt-1">
-            <span className="font-bold">${item.amount?.toLocaleString()}</span>
+            <span className="font-bold">${typeof item.amount === 'number' ? 
+              item.amount.toLocaleString() : 
+              (typeof item.offeredPrice === 'number' ? 
+                item.offeredPrice.toLocaleString() : '0')}</span>
             <Badge className={`
               ${item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''}
               ${item.status === 'Accepted' ? 'bg-green-100 text-green-800' : ''}
               ${item.status === 'Rejected' ? 'bg-red-100 text-red-800' : ''}
               ${item.status === 'Countered' ? 'bg-blue-100 text-blue-800' : ''}
             `}>
-              {item.status}
+              {item.status || 'Pending'}
             </Badge>
           </div>
-          <div className="text-sm mt-1">{format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}</div>
+          <div className="text-sm mt-1">
+            {item.timestamp ? format(new Date(item.timestamp), 'MMM d, yyyy h:mm a') : 'Date not available'}
+          </div>
         </div>
       )
     },
@@ -366,12 +372,12 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
       title: "Email Interactions",
       icon: <Mail className="h-5 w-5 text-indigo-500" />,
       render: (item) => (
-        <div key={item.emailId} className="border rounded-md p-3 mb-2 bg-white">
+        <div key={item.emailId || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
           <div className="font-medium text-[#324c48]">{item.subject}</div>
           <div className="flex mt-1 text-sm">
             <span className={`${item.opened ? 'text-green-600' : 'text-gray-500'}`}>
               {item.opened ? 'Opened' : 'Not opened'}
-              {item.opened && ` on ${format(new Date(item.openTimestamp), 'MMM d, yyyy h:mm a')}`}
+              {item.opened && item.openTimestamp && ` on ${format(new Date(item.openTimestamp), 'MMM d, yyyy h:mm a')}`}
             </span>
           </div>
           {item.clicks?.length > 0 && (
@@ -379,7 +385,7 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
               <div className="text-sm font-medium">Clicked Links:</div>
               {item.clicks.map((click, idx) => (
                 <div key={idx} className="text-sm ml-2">
-                  • {click.url} ({format(new Date(click.timestamp), 'h:mm a')})
+                  • {click.url} ({click.timestamp ? format(new Date(click.timestamp), 'h:mm a') : 'time unknown'})
                 </div>
               ))}
             </div>
@@ -387,49 +393,49 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
         </div>
       )
     },
-'sessionHistory': {
-  title: "Session History",
-  icon: <Smartphone className="h-5 w-5 text-gray-500" />,
-  render: (item) => {
-    // Safely parse dates with fallbacks to avoid invalid date errors
-    const loginTime = item.loginTime ? new Date(item.loginTime) : null;
-    const logoutTime = item.logoutTime ? new Date(item.logoutTime) : null;
-    
-    // Validate dates before formatting them
-    const isValidDate = (date) => date instanceof Date && !isNaN(date);
-    
-    const formatSafeDate = (date) => {
-      if (!date || !isValidDate(date)) {
-        return 'Unknown';
+    sessionHistory: {
+      title: "Session History",
+      icon: <Smartphone className="h-5 w-5 text-gray-500" />,
+      render: (item) => {
+        // Safely parse dates with fallbacks to avoid invalid date errors
+        const loginTime = item.loginTime ? new Date(item.loginTime) : null;
+        const logoutTime = item.logoutTime ? new Date(item.logoutTime) : null;
+        
+        // Validate dates before formatting them
+        const isValidDate = (date) => date instanceof Date && !isNaN(date);
+        
+        const formatSafeDate = (date) => {
+          if (!date || !isValidDate(date)) {
+            return 'Unknown';
+          }
+          try {
+            return format(date, 'MMM d, yyyy h:mm a');
+          } catch (e) {
+            console.error('Date formatting error:', e);
+            return 'Invalid date';
+          }
+        };
+        
+        // Calculate duration safely
+        const duration = (loginTime && logoutTime && isValidDate(loginTime) && isValidDate(logoutTime))
+          ? Math.floor((logoutTime - loginTime) / (1000 * 60))  // in minutes
+          : null;
+        
+        return (
+          <div key={item.loginTime || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
+            <div className="font-medium text-[#324c48]">{item.device || 'Unknown device'}</div>
+            <div className="text-sm text-gray-500">IP: {item.ipAddress || 'Unknown'}</div>
+            <div className="flex justify-between mt-1 text-sm">
+              <span>Login: {formatSafeDate(loginTime)}</span>
+              <span>Logout: {logoutTime ? formatSafeDate(logoutTime) : 'Session active'}</span>
+            </div>
+            {duration !== null && (
+              <div className="text-sm mt-1">Duration: {duration} min</div>
+            )}
+          </div>
+        );
       }
-      try {
-        return format(date, 'MMM d, yyyy h:mm a');
-      } catch (e) {
-        console.error('Date formatting error:', e);
-        return 'Invalid date';
-      }
-    };
-    
-    // Calculate duration safely
-    const duration = (loginTime && logoutTime && isValidDate(loginTime) && isValidDate(logoutTime))
-      ? Math.floor((logoutTime - loginTime) / (1000 * 60))  // in minutes
-      : null;
-    
-    return (
-      <div key={item.loginTime || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
-        <div className="font-medium text-[#324c48]">{item.device || 'Unknown device'}</div>
-        <div className="text-sm text-gray-500">IP: {item.ipAddress || 'Unknown'}</div>
-        <div className="flex justify-between mt-1 text-sm">
-          <span>Login: {formatSafeDate(loginTime)}</span>
-          <span>Logout: {logoutTime ? formatSafeDate(logoutTime) : 'Session active'}</span>
-        </div>
-        {duration !== null && (
-          <div className="text-sm mt-1">Duration: {duration} min</div>
-        )}
-      </div>
-    );
-  }
-}
+    }
   };
   
   if (loading) {
@@ -440,6 +446,9 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
       </div>
     );
   }
+
+  // Debugging logs to see what data we have
+  console.log(`Displaying ${activity.type} detail view with data:`, activity.data);
   
   return (
     <div>
@@ -456,15 +465,31 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
         </Button>
       </div>
       
-      {activity.type === "searchHistory" && activity.data.length > 0 && (
+      {activity.type === "searchHistory" && activity.data && activity.data.length > 0 && (
         <SearchAnalytics searchData={activity.data} />
       )}
       
       <div className="space-y-2">
-        {activity.data.length > 0 ? (
-          activity.data.map(item => activityTypes[activity.type].render(item))
+        {activity.data && activity.data.length > 0 ? (
+          // Map over the data and render each item
+          activity.data.map(item => {
+            // Make sure the renderer exists for this activity type
+            if (activityTypes[activity.type] && typeof activityTypes[activity.type].render === 'function') {
+              return activityTypes[activity.type].render(item);
+            }
+            // Fallback for unknown activity types
+            return (
+              <div key={Math.random()} className="border rounded-md p-3 mb-2 bg-white">
+                <div className="font-medium text-[#324c48]">Unknown activity type</div>
+                <pre className="text-xs overflow-auto mt-2">{JSON.stringify(item, null, 2)}</pre>
+              </div>
+            );
+          })
         ) : (
-          <div className="text-center p-4 text-gray-500">No data available</div>
+          <div className="text-center p-8 bg-gray-50 border border-gray-200 rounded-lg">
+            <p className="text-gray-500 mb-2">No data available for this activity type.</p>
+            <p className="text-sm text-gray-400">This may happen if the buyer has not performed this activity yet.</p>
+          </div>
         )}
       </div>
     </div>

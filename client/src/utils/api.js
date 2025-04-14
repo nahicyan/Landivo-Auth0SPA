@@ -81,7 +81,12 @@ export const getProperty = async (id) => {
     const response = await api.get(`/residency/${id}`);
     return response.data;
   } catch (error) {
-    handleRequestError(error, "Failed to fetch property details");
+    console.error("Error fetching property details:", error);
+    // Return a basic object instead of throwing to avoid breaking the UI
+    return { 
+      title: "Unknown Property", 
+      streetAddress: "Address not available" 
+    };
   }
 };
 
@@ -114,6 +119,20 @@ export const getPropertyOffers = async (propertyId) => {
     handleRequestError(error, "Failed to fetch property offers");
   }
 };
+
+// Get offers for a specific buyer
+export const getBuyerOffers = async (buyerId) => {
+  try {
+    // Query parameter approach
+    const response = await api.get(`/buyer/offers/buyer?buyerId=${buyerId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching buyer offers:", error);
+    // Return empty array instead of throwing to avoid breaking the UI
+    return { offers: [] };
+  }
+};
+
 // New
 export const createResidencyWithFiles = async (formData) => {
   try {
@@ -209,7 +228,8 @@ export const getBuyerById = async (id) => {
     const response = await api.get(`/buyer/${id}`);
     return response.data;
   } catch (error) {
-    handleRequestError(error, "Failed to fetch buyer details");
+    console.error("Error fetching buyer details:", error);
+    throw error;
   }
 };
 

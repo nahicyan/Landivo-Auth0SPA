@@ -180,54 +180,71 @@ export const getOffersOnProperty = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * Get offers by buyer
+ * @route GET /api/buyer/offers/buyer
+ * @access Private
+ */
 export const getOffersByBuyer = asyncHandler(async (req, res) => {
-  const { email, phone } = req.query;
+  const { buyerId, email, phone } = req.query;
 
-  if (!email && !phone) {
-    res
-      .status(400)
-      .json({ message: "At least one of email or phone is required." });
-    return;
+  if (!buyerId && !email && !phone) {
+    return res.status(400).json({ 
+      message: "At least one of buyerId, email or phone is required." 
+    });
   }
 
   try {
-    // Find buyer by email or phone
-    const buyer = await prisma.buyer.findFirst({
-      where: {
-        OR: [{ email }, { phone }],
-      },
-    });
-
-    if (!buyer) {
-      res
-        .status(404)
-        .json({ message: "Buyer not found with the provided email or phone." });
-      return;
+    // Find buyer by ID, email or phone
+    let buyer;
+    
+    if (buyerId) {
+      buyer = await prisma.buyer.findUnique({
+        where: { id: buyerId }
+      });
+    } else if (email) {
+      buyer = await prisma.buyer.findFirst({
+        where: { email }
+      });
+    } else if (phone) {
+      buyer = await prisma.buyer.findFirst({
+        where: { phone }
+      });
     }
 
-    // Fetch all offers by the buyer
+    if (!buyer) {
+      return res.status(404).json({ 
+        message: "Buyer not found with the provided information." 
+      });
+    }
+
+    // Fetch all offers by the buyer without property relation
     const offers = await prisma.offer.findMany({
       where: { buyerId: buyer.id },
+      // Removed include: { property: true } that would cause an error
       orderBy: {
-        timestamp: "desc", // Change to "asc" for oldest first
-      },
+        timestamp: 'desc' // Latest first
+      }
     });
 
+    // Return offers with buyer information
     res.status(200).json({
       buyer: {
         firstName: buyer.firstName,
         lastName: buyer.lastName,
         email: buyer.email,
         phone: buyer.phone,
+        buyerType: buyer.buyerType,
+        id: buyer.id
       },
       totalOffers: offers.length,
-      offers,
+      offers
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching offers by buyer:", err);
     res.status(500).json({
-      message: "An error occurred while fetching offers for the buyer.",
-      error: err.message,
+      message: "An error occurred while fetching offers by buyer.",
+      error: err.message
     });
   }
 });

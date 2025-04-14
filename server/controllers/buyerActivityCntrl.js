@@ -192,11 +192,6 @@ export const getBuyerActivity = asyncHandler(async (req, res) => {
   }
 });
 
-/**
- * Get buyer activity summary
- * @route GET /api/buyer/activity/:buyerId/summary
- * @access Private - Admins only
- */
 export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
   const { buyerId } = req.params;
   
@@ -232,7 +227,6 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       orderBy: {
         timestamp: 'desc'
       }
-      // No take limit
     });
 
     // Get ALL search history
@@ -244,7 +238,6 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       orderBy: {
         timestamp: 'desc'
       }
-      // No take limit
     });
     
     // Get ALL page views
@@ -256,16 +249,17 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       orderBy: {
         timestamp: 'desc'
       }
-      // No take limit
     });
     
-    // Get ALL offer submissions
+    // Get ALL offer submissions WITHOUT the property include that's causing the error
     const offerHistory = await prisma.offer.findMany({
-      where: { buyerId },
+      where: { 
+        buyerId 
+      },
       orderBy: {
         timestamp: 'desc'
       }
-      // No take limit
+      // Removed the include: { property: {...} } that was causing the error
     });
     
     // Get ALL click events
@@ -277,7 +271,6 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       orderBy: {
         timestamp: 'desc'
       }
-      // No take limit
     });
     
     // Get ALL session history
@@ -291,7 +284,6 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       orderBy: {
         timestamp: 'desc'
       }
-      // No take limit
     });
     
     // Find the most recent activity
@@ -351,11 +343,12 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
       activityCounts: activityByType,
       totalActivities,
       propertyViews,
-      offerHistory,
+      offerHistory, // Now without property details, but at least it won't error
       searchHistory,
       pageViews,
       clickEvents,
-      sessionHistory: processSessionHistory(sessionHistory)
+      sessionHistory: processSessionHistory(sessionHistory),
+      offers: offerHistory.length  // Include the count explicitly
     };
     
     res.status(200).json(summary);
