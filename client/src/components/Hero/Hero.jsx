@@ -1,5 +1,5 @@
 import React from "react";
-import SearchGlobal from "../SearchGlobal/SearchGlobal";
+import SearchGlobalWithTracking from  "../SearchGlobal/SearchGlobalWithTracking";
 
 const Hero = () => {
   return (
@@ -18,7 +18,7 @@ const Hero = () => {
                   locations and great prices. Secure your perfect property today
                   before it's gone!
                 </p>
-                <SearchGlobal />
+                <SearchGlobalWithTracking />
               </div>
               {/* Statsss */}
               <div className="flex items-center justify-center mt-8 space-x-6 lg:justify-start sm:space-x-8">

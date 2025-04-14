@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import useProperties from "../../components/hooks/useProperties.js";
 import PropertyCard from "../../components/PropertyCard/PropertyCard";
-import Search from "@/components/Search/Search";
+import SearchWithTracking from "@/components/Search/SearchWithTracking";
 
 // Helper function to determine if an element has horizontal overflow
 function hasHorizontalOverflow(element) {
@@ -146,7 +146,11 @@ export default function Properties() {
             Browse through a wide selection of properties with detailed filters
             to help you find the perfect fit.
           </p>
-          <Search query={searchQuery} setQuery={setSearchQuery} />
+          <SearchWithTracking
+            query={searchQuery}
+            setQuery={setSearchQuery}
+            context="properties"
+          />
         </div>
 
         {/* Small Separating Line */}

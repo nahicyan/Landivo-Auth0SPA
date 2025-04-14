@@ -1,3 +1,5 @@
+// client/src/pages/OtherLands/OtherLands.jsx
+
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -6,12 +8,13 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import useProperties from "../../components/hooks/useProperties.js";
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
-import SearchArea from "@/components/SearchArea/SearchArea";
+import SearchAreaWithTracking from "@/components/SearchArea/SearchAreaWithTracking";
 import { Button } from "@/components/ui/button";
 
 export default function OtherLandsProperty() {
   const { data, isError, isLoading } = useProperties();
-  const [searchQuery, setSearchQuery] = useState("");
+  // Use areaQuery for both tracking and filtering
+  const [areaQuery, setAreaQuery] = useState("");
   const scrollRef = useRef(null);
 
   // State to track whether there is scrollable content on the left/right
@@ -19,14 +22,6 @@ export default function OtherLandsProperty() {
     showLeft: false,
     showRight: false,
   });
-
-  // Update search query from URL parameters on mount
-  // (This code remains unchanged.)
-
-  // Optional: Handle Search submission (if needed)
-  const handleSearch = (e) => {
-    e.preventDefault();
-  };
 
   // Function to update the scrollState based on the container's measurements
   const updateScrollState = () => {
@@ -47,6 +42,11 @@ export default function OtherLandsProperty() {
       window.removeEventListener("resize", updateScrollState);
     };
   }, [data]);
+
+  // Update scroll state when filtered results change
+  useEffect(() => {
+    updateScrollState();
+  }, [areaQuery]);
 
   // Error State
   if (isError) {
@@ -73,10 +73,12 @@ export default function OtherLandsProperty() {
     (property) => property.area === "Other Areas"
   );
 
-  // Further filter using the search query across multiple fields
+  // Apply search filter to OtherLands properties
   const filteredOtherLandsProperties = OtherLandsProperties.filter(
     (property) => {
-      const query = searchQuery.toLowerCase();
+      const query = areaQuery.toLowerCase();
+      if (!query) return true; // If no query, return all OtherLands properties
+      
       return (
         property.title?.toLowerCase().includes(query) ||
         property.streetAddress?.toLowerCase().includes(query) ||
@@ -92,31 +94,64 @@ export default function OtherLandsProperty() {
     }
   );
 
-  // Determine which properties to display: if there are any filtered, use them; otherwise, fall back to all properties.
+  // Apply search filter to all properties (for fallback case)
+  const filteredAllProperties = data.filter(
+    (property) => {
+      const query = areaQuery.toLowerCase();
+      if (!query) return true; // If no query, return all properties
+      
+      return (
+        property.title?.toLowerCase().includes(query) ||
+        property.streetAddress?.toLowerCase().includes(query) ||
+        property.state?.toLowerCase().includes(query) ||
+        property.zip?.toLowerCase().includes(query) ||
+        property.area?.toLowerCase().includes(query) ||
+        property.apnOrPin?.toLowerCase().includes(query) ||
+        property.ltag?.toLowerCase().includes(query) ||
+        property.rtag?.toLowerCase().includes(query) ||
+        property.city?.toLowerCase().includes(query) ||
+        property.county?.toLowerCase().includes(query)
+      );
+    }
+  );
+
+  // Set the current area for the tracking component
+  const currentArea = "Other Areas";
+
+  // Determine which properties to display:
+  // 1. If filtered Other Areas properties exist, show them
+  // 2. If no Other Areas properties (or no matching filtered ones), show filtered all properties
   const displayProperties =
     filteredOtherLandsProperties.length > 0
       ? filteredOtherLandsProperties
-      : data;
+      : filteredAllProperties;
 
-  // Set header text based on whether we're showing just "Other Areas" or all properties.
+  // Set header text based on whether we're showing just "Other Areas" or all properties
   const headerText =
     filteredOtherLandsProperties.length > 0
       ? "Properties in Other Areas"
       : "All Properties";
 
+  // Determine subtitle text
+  const subtitleText = filteredOtherLandsProperties.length > 0
+    ? "Browse through properties available in Other Areas."
+    : OtherLandsProperties.length > 0 
+      ? `No Other Areas properties match "${areaQuery}". Showing all matching properties instead.`
+      : "Sorry! We sold through everything in Other Areas! Maybe you would be interested in these properties:";
+
   // Handlers for horizontal scrolling
   const handleScrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -300, behavior: "smooth" });
+      scrollRef.current.scrollBy({ left: -380, behavior: "smooth" });
       // Update state after a short delay for smooth scrolling
-      setTimeout(updateScrollState, 380);
+      setTimeout(updateScrollState, 300);
     }
   };
 
   const handleScrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 300, behavior: "smooth" });
-      setTimeout(updateScrollState, 380);
+      scrollRef.current.scrollBy({ left: 380, behavior: "smooth" });
+      setTimeout(updateScrollState, 300);
     }
   };
 
@@ -127,19 +162,14 @@ export default function OtherLandsProperty() {
         <div className="mb-10 text-center">
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">{headerText}</h1>
           <p className="text-lg mb-6">
-            {filteredOtherLandsProperties.length > 0 ? (
-              "Browse through properties available in the Other Areas area."
-            ) : (
-              <>
-                Sorry! We sold through everything in Other Areas! <br />
-                Maybe you would be interested in these properties:
-              </>
-            )}
+            {subtitleText}
           </p>
-          <SearchArea
-            query={searchQuery}
-            setQuery={setSearchQuery}
-            placeholder="Search by title, address, state, zip, area, APN, tags, city, or county"
+          <SearchAreaWithTracking
+            query={areaQuery}
+            setQuery={setAreaQuery}
+            placeholder="Search in this area"
+            area={currentArea}
+            filteredData={filteredOtherLandsProperties}
           />
         </div>
 
@@ -185,7 +215,7 @@ export default function OtherLandsProperty() {
             )}
           </div>
         ) : (
-          <p className="text-center text-gray-600 py-4">No properties found.</p>
+          <p className="text-center text-gray-600 py-4">No properties found matching your search.</p>
         )}
 
         {/* "All Properties" Button */}
@@ -193,7 +223,7 @@ export default function OtherLandsProperty() {
           <Button
             onClick={() => (window.location.href = "/properties")}
             className="bg-[#324c48] hover:bg-[#3f4f24] text-white px-6 py-3 text-lg font-semibold rounded-lg shadow transition transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#3f4f24] focus:ring-offset-2"
-            >
+          >
             All Properties
           </Button>
         </div>

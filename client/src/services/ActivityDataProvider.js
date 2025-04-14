@@ -105,12 +105,21 @@ export default class ActivityDataProvider {
    * @returns {Array} Formatted search history
    */
   static _formatSearchHistory(searchHistory = []) {
+    if (!searchHistory || !Array.isArray(searchHistory)) {
+      console.warn('Invalid search history data:', searchHistory);
+      return [];
+    }
+    
     return searchHistory.map(search => {
       const data = search.eventData || {};
       return {
         query: data.query || 'Unknown search',
         timestamp: search.timestamp,
-        results: data.resultsCount || 0
+        results: data.resultsCount || 0,
+        searchType: data.searchType || 'standard',
+        context: data.context || '',
+        area: data.area || null,
+        filters: data.filters || {}
       };
     });
   }
@@ -261,6 +270,7 @@ export default class ActivityDataProvider {
       'clickEvents': 'click',
       'pageVisits': 'page_view',
       'searchHistory': 'search',
+      'searchQuery': 'search_query',
       'offerHistory': 'offer_submission',
       'emailInteractions': 'email_interaction',
       'sessionHistory': 'session_start'

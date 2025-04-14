@@ -1,10 +1,10 @@
-// client/src/components/Search/SearchWithTracking.jsx
+// client/src/components/SearchGlobal/SearchGlobalWithTracking.jsx
 import React, { useEffect } from 'react';
-import Search from './Search';
+import SearchGlobal from './SearchGlobal';
 import { useActivityTrackingContext } from '@/components/ActivityTracking/ActivityTrackingProvider';
 import { useVipBuyer } from '@/utils/VipBuyerContext';
 
-const SearchWithTracking = (props) => {
+const SearchGlobalWithTracking = (props) => {
   const { trackSearch, trackEvent } = useActivityTrackingContext();
   const { isVipBuyer } = useVipBuyer();
   
@@ -20,28 +20,28 @@ const SearchWithTracking = (props) => {
         trackSearch(
           props.query,
           props.filteredData?.length || 0,
-          { type: 'standard', ...props.filters || {} }
+          { type: 'global', ...props.filters || {} }
         );
         
         // Track additional search metadata
         trackEvent('search_query', {
-          searchType: 'standard',
+          searchType: 'global',
           query: props.query,
           resultsCount: props.filteredData?.length || 0,
           timestamp: new Date().toISOString(),
-          // Track context information if available
-          context: props.context || 'properties',
           // Track filters if available
-          filters: props.filters || {}
+          area: props.filters?.area || null,
+          priceRange: props.filters?.priceRange || null,
+          propertyType: props.filters?.propertyType || null,
         });
       }
     }, 800); // 800ms debounce
     
     return () => clearTimeout(debounceTimer);
-  }, [isVipBuyer, props.query, props.filteredData, props.filters, props.context, trackSearch, trackEvent]);
+  }, [isVipBuyer, props.query, props.filteredData, props.filters, trackSearch, trackEvent]);
 
-  // Render the original Search component with all props
-  return <Search {...props} />;
+  // Render the original SearchGlobal component with all props
+  return <SearchGlobal {...props} />;
 };
 
-export default SearchWithTracking;
+export default SearchGlobalWithTracking;

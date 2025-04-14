@@ -177,6 +177,91 @@ const ActivityDetailView = ({ buyer, activityData: initialData = null }) => {
 };
 
 /**
+ * Search Analytics Component - Shows analytics for search data
+ */
+const SearchAnalytics = ({ searchData }) => {
+  // Group searches by type
+  const byType = {
+    global: searchData.filter(s => s.searchType === 'global').length,
+    area: searchData.filter(s => s.searchType === 'area').length,
+    standard: searchData.filter(s => s.searchType === 'standard').length
+  };
+  
+  // Get common search terms
+  const terms = {};
+  searchData.forEach(search => {
+    terms[search.query] = (terms[search.query] || 0) + 1;
+  });
+  
+  // Sort terms by frequency
+  const commonTerms = Object.entries(terms)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="border rounded-md p-4 bg-white">
+        <h3 className="text-sm font-medium mb-2">Search Types</h3>
+        <div className="space-y-2">
+          <div className="flex items-center">
+            <div className="w-24">Global</div>
+            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-400"
+                style={{ width: `${searchData.length ? (byType.global / searchData.length) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="w-8 text-right ml-2">{byType.global}</div>
+          </div>
+          <div className="flex items-center">
+            <div className="w-24">Area</div>
+            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-400"
+                style={{ width: `${searchData.length ? (byType.area / searchData.length) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="w-8 text-right ml-2">{byType.area}</div>
+          </div>
+          <div className="flex items-center">
+            <div className="w-24">Standard</div>
+            <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-purple-400"
+                style={{ width: `${searchData.length ? (byType.standard / searchData.length) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="w-8 text-right ml-2">{byType.standard}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="border rounded-md p-4 bg-white">
+        <h3 className="text-sm font-medium mb-2">Common Search Terms</h3>
+        {commonTerms.length > 0 ? (
+          <div className="space-y-2">
+            {commonTerms.map(([term, count]) => (
+              <div key={term} className="flex items-center">
+                <div className="w-24 truncate" title={term}>"{term}"</div>
+                <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-orange-400"
+                    style={{ width: `${(count / commonTerms[0][1]) * 100}%` }}
+                  />
+                </div>
+                <div className="w-8 text-right ml-2">{count}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-gray-500 text-sm">No search data available</div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/**
  * Activity Detail Component - Shows a detailed breakdown of a specific activity
  */
 const ActivityDetail = ({ activity, onBack, loading }) => {
@@ -220,16 +305,38 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
         </div>
       )
     },
+
     searchHistory: {
       title: "Search History",
       icon: <Search className="h-5 w-5 text-orange-500" />,
       render: (item) => (
         <div key={item.timestamp} className="border rounded-md p-3 mb-2 bg-white">
-          <div className="font-medium text-[#324c48]">"{item.query}"</div>
+          <div className="flex justify-between">
+            <div className="font-medium text-[#324c48]">"{item.query}"</div>
+            {item.searchType && (
+              <Badge variant="outline" className={`
+                ${item.searchType === 'global' ? 'bg-blue-50 text-blue-600' : ''}
+                ${item.searchType === 'area' ? 'bg-green-50 text-green-600' : ''}
+                ${item.searchType === 'standard' ? 'bg-purple-50 text-purple-600' : ''}
+              `}>
+                {item.searchType}
+              </Badge>
+            )}
+          </div>
           <div className="flex justify-between mt-1 text-sm">
             <span>{format(new Date(item.timestamp), 'MMM d, yyyy h:mm a')}</span>
             <span>{item.results} results</span>
           </div>
+          {item.area && (
+            <div className="text-xs text-gray-500 mt-1">
+              Area: {item.area}
+            </div>
+          )}
+          {item.context && (
+            <div className="text-xs text-gray-500 mt-1">
+              Context: {item.context}
+            </div>
+          )}
         </div>
       )
     },
@@ -348,6 +455,10 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
           Back to Summary
         </Button>
       </div>
+      
+      {activity.type === "searchHistory" && activity.data.length > 0 && (
+        <SearchAnalytics searchData={activity.data} />
+      )}
       
       <div className="space-y-2">
         {activity.data.length > 0 ? (

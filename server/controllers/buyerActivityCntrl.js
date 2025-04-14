@@ -57,11 +57,21 @@ export const recordBuyerActivity = asyncHandler(async (req, res) => {
             eventType: type,
             buyerId,
             timestamp: timestamp ? new Date(timestamp) : new Date(),
-            eventData: data || {},
+            eventData: {
+              ...data,
+              ...(type === 'search' || type === 'search_query' ? {
+                searchType: data.searchType || 'standard',
+                query: data.query || '',
+                resultsCount: data.resultsCount || 0,
+                area: data.area || null,
+                context: data.context || null,
+                filters: data.filters || {}
+              } : {})
+            },
             sessionId: data?.sessionId || null,
             page: data?.path || data?.url || null,
             propertyId: data?.propertyId || null,
-            interactionType: data?.elementType || null,
+            interactionType: data?.elementType || (type === 'search' ? 'search' : null),
             ipAddress: req.ip || null,
             userAgent: req.headers["user-agent"] || null
           }

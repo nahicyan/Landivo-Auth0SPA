@@ -1,3 +1,5 @@
+// client/src/pages/Houston/Houston.jsx
+
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -6,12 +8,13 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import useProperties from "../../components/hooks/useProperties.js";
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
-import SearchArea from "@/components/SearchArea/SearchArea";
+import SearchAreaWithTracking from "@/components/SearchArea/SearchAreaWithTracking";
 import { Button } from "@/components/ui/button";
 
 export default function HoustonProperty() {
   const { data, isError, isLoading } = useProperties();
-  const [searchQuery, setSearchQuery] = useState("");
+  // Use areaQuery for both tracking and filtering
+  const [areaQuery, setAreaQuery] = useState("");
   const scrollRef = useRef(null);
 
   // State to track whether there is scrollable content on the left/right
@@ -19,14 +22,6 @@ export default function HoustonProperty() {
     showLeft: false,
     showRight: false,
   });
-
-  // Update search query from URL parameters on mount
-  // (This code remains unchanged.)
-
-  // Optional: Handle Search submission (if needed)
-  const handleSearch = (e) => {
-    e.preventDefault();
-  };
 
   // Function to update the scrollState based on the container's measurements
   const updateScrollState = () => {
@@ -47,6 +42,11 @@ export default function HoustonProperty() {
       window.removeEventListener("resize", updateScrollState);
     };
   }, [data]);
+
+  // Update scroll state when filtered results change
+  useEffect(() => {
+    updateScrollState();
+  }, [areaQuery]);
 
   // Error State
   if (isError) {
@@ -73,10 +73,12 @@ export default function HoustonProperty() {
     (property) => property.area === "Houston"
   );
 
-  // Further filter using the search query across multiple fields
+  // Apply search filter to Houston properties
   const filteredHoustonProperties = HoustonProperties.filter(
     (property) => {
-      const query = searchQuery.toLowerCase();
+      const query = areaQuery.toLowerCase();
+      if (!query) return true; // If no query, return all Houston properties
+      
       return (
         property.title?.toLowerCase().includes(query) ||
         property.streetAddress?.toLowerCase().includes(query) ||
@@ -92,17 +94,50 @@ export default function HoustonProperty() {
     }
   );
 
-  // Determine which properties to display: if there are any filtered, use them; otherwise, fall back to all properties.
+  // Apply search filter to all properties (for fallback case)
+  const filteredAllProperties = data.filter(
+    (property) => {
+      const query = areaQuery.toLowerCase();
+      if (!query) return true; // If no query, return all properties
+      
+      return (
+        property.title?.toLowerCase().includes(query) ||
+        property.streetAddress?.toLowerCase().includes(query) ||
+        property.state?.toLowerCase().includes(query) ||
+        property.zip?.toLowerCase().includes(query) ||
+        property.area?.toLowerCase().includes(query) ||
+        property.apnOrPin?.toLowerCase().includes(query) ||
+        property.ltag?.toLowerCase().includes(query) ||
+        property.rtag?.toLowerCase().includes(query) ||
+        property.city?.toLowerCase().includes(query) ||
+        property.county?.toLowerCase().includes(query)
+      );
+    }
+  );
+
+  // Set the current area for the tracking component
+  const currentArea = "Houston";
+
+  // Determine which properties to display:
+  // 1. If filtered Houston properties exist, show them
+  // 2. If no Houston properties (or no matching filtered ones), show filtered all properties
   const displayProperties =
     filteredHoustonProperties.length > 0
       ? filteredHoustonProperties
-      : data;
+      : filteredAllProperties;
 
-  // Set header text based on whether we're showing just "Houston" or all properties.
+  // Set header text based on whether we're showing just "Houston" or all properties
   const headerText =
     filteredHoustonProperties.length > 0
       ? "Properties in Houston"
       : "All Properties";
+
+  // Determine subtitle text
+  const subtitleText = filteredHoustonProperties.length > 0
+    ? "Browse through properties available in Houston."
+    : HoustonProperties.length > 0 
+      ? `No Houston properties match "${areaQuery}". Showing all matching properties instead.`
+      : "Sorry! We sold through everything in Houston! Maybe you would be interested in these properties:";
 
   // Handlers for horizontal scrolling
   const handleScrollLeft = () => {
@@ -127,19 +162,14 @@ export default function HoustonProperty() {
         <div className="mb-10 text-center">
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">{headerText}</h1>
           <p className="text-lg mb-6">
-            {filteredHoustonProperties.length > 0 ? (
-              "Browse through properties available in the Houston."
-            ) : (
-              <>
-                Sorry! We sold through everything in Houston! <br />
-                Maybe you would be interested in these properties:
-              </>
-            )}
+            {subtitleText}
           </p>
-          <SearchArea
-            query={searchQuery}
-            setQuery={setSearchQuery}
-            placeholder="Search by title, address, state, zip, area, APN, tags, city, or county"
+          <SearchAreaWithTracking
+            query={areaQuery}
+            setQuery={setAreaQuery}
+            placeholder="Search in this area"
+            area={currentArea}
+            filteredData={filteredHoustonProperties}
           />
         </div>
 
@@ -185,7 +215,7 @@ export default function HoustonProperty() {
             )}
           </div>
         ) : (
-          <p className="text-center text-gray-600 py-4">No properties found.</p>
+          <p className="text-center text-gray-600 py-4">No properties found matching your search.</p>
         )}
 
         {/* "All Properties" Button */}
@@ -193,7 +223,7 @@ export default function HoustonProperty() {
           <Button
             onClick={() => (window.location.href = "/properties")}
             className="bg-[#324c48] hover:bg-[#3f4f24] text-white px-6 py-3 text-lg font-semibold rounded-lg shadow transition transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#3f4f24] focus:ring-offset-2"
-            >
+          >
             All Properties
           </Button>
         </div>

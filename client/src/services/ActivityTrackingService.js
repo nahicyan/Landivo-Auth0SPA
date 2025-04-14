@@ -194,19 +194,25 @@ class ActivityTrackingService {
     });
   }
 
-  /**
-   * Record a search event
-   * @param {string} query - Search query
-   * @param {number} resultsCount - Number of results
-   * @param {Object} filters - Search filters
-   */
-  recordSearch(query, resultsCount, filters = {}) {
-    this.recordEvent('search', {
-      query,
-      resultsCount,
-      filters
-    });
-  }
+/**
+ * Record a search event
+ * @param {string} query - Search query
+ * @param {number} resultsCount - Number of results
+ * @param {Object} options - Search options
+ * @param {string} [options.type] - Search type ('global', 'area', 'standard')
+ * @param {string} [options.area] - Area context for area searches
+ * @param {Object} [options.filters] - Search filters
+ */
+recordSearch(query, resultsCount, options = {}) {
+  this.recordEvent('search', {
+    query,
+    resultsCount,
+    searchType: options.type || 'standard',
+    area: options.area || null,
+    filters: options.filters || {},
+    context: options.context || null
+  });
+}
 
   /**
    * Record an offer submission event

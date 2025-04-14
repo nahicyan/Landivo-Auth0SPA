@@ -1,10 +1,10 @@
-// client/src/components/Search/SearchWithTracking.jsx
+// client/src/components/SearchArea/SearchAreaWithTracking.jsx
 import React, { useEffect } from 'react';
-import Search from './Search';
+import SearchArea from './SearchArea';
 import { useActivityTrackingContext } from '@/components/ActivityTracking/ActivityTrackingProvider';
 import { useVipBuyer } from '@/utils/VipBuyerContext';
 
-const SearchWithTracking = (props) => {
+const SearchAreaWithTracking = (props) => {
   const { trackSearch, trackEvent } = useActivityTrackingContext();
   const { isVipBuyer } = useVipBuyer();
   
@@ -20,28 +20,27 @@ const SearchWithTracking = (props) => {
         trackSearch(
           props.query,
           props.filteredData?.length || 0,
-          { type: 'standard', ...props.filters || {} }
+          { type: 'area', area: props.area || 'unknown', ...props.filters || {} }
         );
         
         // Track additional search metadata
         trackEvent('search_query', {
-          searchType: 'standard',
+          searchType: 'area',
           query: props.query,
           resultsCount: props.filteredData?.length || 0,
           timestamp: new Date().toISOString(),
-          // Track context information if available
-          context: props.context || 'properties',
-          // Track filters if available
-          filters: props.filters || {}
+          area: props.area || 'unknown',
+          // Additional area-specific metadata
+          placeholder: props.placeholder || 'Search'
         });
       }
     }, 800); // 800ms debounce
     
     return () => clearTimeout(debounceTimer);
-  }, [isVipBuyer, props.query, props.filteredData, props.filters, props.context, trackSearch, trackEvent]);
+  }, [isVipBuyer, props.query, props.filteredData, props.area, props.filters, trackSearch, trackEvent]);
 
-  // Render the original Search component with all props
-  return <Search {...props} />;
+  // Render the original SearchArea component with all props
+  return <SearchArea {...props} />;
 };
 
-export default SearchWithTracking;
+export default SearchAreaWithTracking;
