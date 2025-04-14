@@ -41,18 +41,28 @@ export default class ActivityDataProvider {
    * @returns {Array} Formatted property views
    */
   static _formatPropertyViews(propertyViews = []) {
+    if (!propertyViews || !Array.isArray(propertyViews)) {
+      console.warn('Invalid property views data:', propertyViews);
+      return [];
+    }
+    
+    console.log('Formatting property views:', propertyViews);
+    
     return propertyViews.map(view => {
+      // Extract data from eventData if present, otherwise from the top level
       const data = view.eventData || {};
+      
       return {
         propertyId: data.propertyId || view.propertyId,
         propertyTitle: data.propertyTitle || 'Unknown Property',
         propertyAddress: data.propertyAddress || 'Address not available',
-        timestamp: view.timestamp,
+        timestamp: view.timestamp || new Date().toISOString(),
         duration: data.duration || 60, // Default to 60 seconds if not available
         details: data.details || 'Viewed property details'
       };
     });
   }
+  
 
   /**
    * Format click events data
@@ -216,7 +226,7 @@ export default class ActivityDataProvider {
    */
   static _mapActivityTypeToApiType(activityType) {
     const mapping = {
-      'propertyViews': 'property_view',
+      'propertyViews': 'property_view', // Make sure this matches the event type in MongoDB
       'clickEvents': 'click',
       'pageVisits': 'page_view',
       'searchHistory': 'search',

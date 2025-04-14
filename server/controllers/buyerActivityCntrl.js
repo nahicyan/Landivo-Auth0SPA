@@ -7,6 +7,7 @@ import { prisma } from "../config/prismaConfig.js";
  * @route POST /api/buyer/activity
  * @access Private - VIP buyers & Admins only
  */
+
 export const recordBuyerActivity = asyncHandler(async (req, res) => {
   const { events } = req.body;
   
@@ -17,6 +18,7 @@ export const recordBuyerActivity = asyncHandler(async (req, res) => {
   }
   
   try {
+    console.log(`Processing ${events.length} activity events`);
     let recordedEvents = 0;
     const errors = [];
     
@@ -24,6 +26,9 @@ export const recordBuyerActivity = asyncHandler(async (req, res) => {
     for (const event of events) {
       try {
         const { type, buyerId, auth0UserId, timestamp, data } = event;
+        
+        // Log the event being processed for debugging
+        console.log(`Processing event: ${type} for buyer ${buyerId}`, data);
         
         if (!type || !buyerId) {
           errors.push({ event, error: "Missing required fields (type or buyerId)" });
@@ -47,7 +52,7 @@ export const recordBuyerActivity = asyncHandler(async (req, res) => {
         }
         
         // Create the activity record
-        await prisma.buyerActivity.create({
+        const createdActivity = await prisma.buyerActivity.create({
           data: {
             eventType: type,
             buyerId,
@@ -62,6 +67,7 @@ export const recordBuyerActivity = asyncHandler(async (req, res) => {
           }
         });
         
+        console.log(`Successfully recorded ${type} event:`, createdActivity.id);
         recordedEvents++;
       } catch (eventError) {
         console.error("Error recording activity event:", eventError);
@@ -211,14 +217,14 @@ export const getBuyerActivitySummary = asyncHandler(async (req, res) => {
     const propertyViews = await prisma.buyerActivity.findMany({
       where: {
         buyerId,
-        eventType: 'property_view'
+        eventType: 'property_view' // Make sure this matches what's sent from the client
       },
       orderBy: {
         timestamp: 'desc'
       },
       take: 10
     });
-    
+
     // Get search history
     const searchHistory = await prisma.buyerActivity.findMany({
       where: {

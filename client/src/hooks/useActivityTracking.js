@@ -81,9 +81,23 @@ export function useActivityTracking(options = {}) {
    */
   const trackPropertyView = useCallback((property) => {
     if (initialized.current && property) {
+      console.log("Tracking property view in hook:", property);
       activityTrackingService.recordPropertyView(property);
+      
+      // For debugging, also log the tracking state
+      console.log("Tracking state:", {
+        isVipBuyer,
+        isInitialized: initialized.current,
+        vipBuyerId: vipBuyerData?.id,
+        auth0Id: user?.sub
+      });
+    } else {
+      console.log("Cannot track property view:", { 
+        initialized: initialized.current,
+        hasProperty: !!property
+      });
     }
-  }, []);
+  }, [isVipBuyer, vipBuyerData, user]);
 
   /**
    * Track search

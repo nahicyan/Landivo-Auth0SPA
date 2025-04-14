@@ -176,17 +176,21 @@ class ActivityTrackingService {
    */
   recordPropertyView(property) {
     if (!property || !property.id) {
-      console.error('Invalid property data for tracking');
+      console.error('Invalid property data for tracking:', property);
       return;
     }
-
+  
+    console.log('Recording property view for:', property.id);
+    
     this.recordEvent('property_view', {
       propertyId: property.id,
       propertyTitle: property.title || 'Unknown Property',
       propertyAddress: property.streetAddress ? 
         `${property.streetAddress}, ${property.city || ''}, ${property.state || ''}` : 
         'Address not available',
-      price: property.askingPrice || property.price || null
+      price: property.askingPrice || property.price || null,
+      entryTime: new Date().toISOString(),
+      duration: 0  // Will be updated when the user leaves the page
     });
   }
 
