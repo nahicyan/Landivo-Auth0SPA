@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
 import { getBuyerById } from "@/utils/api";
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 import {
   ArrowLeft,
@@ -26,7 +27,7 @@ import {
   Calendar,
   Edit,
   Trash2,
-  Download,
+  AlertTriangle,
 } from "lucide-react";
 
 import BuyerDetailTabs from "./BuyerDetailTabs";
@@ -37,11 +38,12 @@ export default function BuyerDetail() {
   const [deletingBuyer, setDeletingBuyer] = useState(false);
 
   // Fetch buyer data
-  const { data: buyer, isLoading, isError } = useQuery(
+  const { data: buyer, isLoading, isError, error } = useQuery(
     ["buyer", buyerId],
     () => getBuyerById(buyerId),
     {
       refetchOnWindowFocus: false,
+      retry: 1,
     }
   );
 
@@ -103,16 +105,32 @@ export default function BuyerDetail() {
   if (isError) {
     return (
       <div className="container py-10">
-        <div className="flex flex-col items-center justify-center py-20">
-          <h2 className="text-2xl font-bold mb-2">Error Loading Buyer</h2>
-          <p className="text-gray-500 mb-6">
-            There was a problem loading this buyer's information.
-          </p>
-          <Button onClick={() => navigate("/admin/buyers")}>
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            className="mb-4"
+            onClick={() => navigate("/admin/buyers")}
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Buyers
           </Button>
         </div>
+        
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error Loading Buyer</AlertTitle>
+          <AlertDescription>
+            {error?.message || "There was a problem loading this buyer's information."}
+          </AlertDescription>
+        </Alert>
+        
+        <Button 
+          onClick={() => navigate("/admin/buyers")}
+          className="bg-[#324c48] hover:bg-[#283e3a]"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Return to Buyers List
+        </Button>
       </div>
     );
   }
@@ -151,15 +169,17 @@ export default function BuyerDetail() {
                   {buyer?.firstName} {buyer?.lastName}
                 </CardTitle>
                 <CardDescription>
-                  <Badge 
-                    variant="outline" 
-                    className={getBuyerTypeClass(buyer?.buyerType)}
-                  >
-                    {buyer?.buyerType || 'Unknown Type'}
-                  </Badge>
-                  {buyer?.source === 'VIP Buyers List' && (
-                    <Badge className="bg-[#D4A017] text-white ml-2">VIP</Badge>
-                  )}
+                  <div className="flex flex-wrap gap-2 justify-center mt-1">
+                    <Badge 
+                      variant="outline" 
+                      className={getBuyerTypeClass(buyer?.buyerType)}
+                    >
+                      {buyer?.buyerType || 'Unknown Type'}
+                    </Badge>
+                    {buyer?.source === 'VIP Buyers List' && (
+                      <Badge className="bg-[#D4A017] text-white">VIP</Badge>
+                    )}
+                  </div>
                 </CardDescription>
               </>
             )}
@@ -253,7 +273,7 @@ export default function BuyerDetail() {
           </CardFooter>
         </Card>
         
-        {/* Stats and Tabs */}
+        {/* Tabs for buyer details and activity */}
         <div className="md:col-span-2 space-y-6">
           {isLoading ? (
             <Card>
