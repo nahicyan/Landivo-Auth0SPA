@@ -50,7 +50,7 @@ export default function FinanceWidget({ isLoading, dateRange, fullSize = false }
         <Tabs defaultValue="revenue">
           <TabsList className="mb-4">
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
-            <TabsTrigger value="profit">Profit</TabsTrigger>
+            <TabsTrigger value="asset">Asset</TabsTrigger>
             <TabsTrigger value="sales">Sales</TabsTrigger>
           </TabsList>
           

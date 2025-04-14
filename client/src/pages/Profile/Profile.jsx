@@ -1,4 +1,3 @@
-// import React from 'react';
 import React, { useState, useEffect } from "react";
 import { useAuth0 } from '@auth0/auth0-react';
 import { useAuth } from '@/components/hooks/useAuth';
@@ -21,8 +20,8 @@ import {
   LogOut 
 } from 'lucide-react';
 import Auth0DebugComponent from '@/components/Auth0/Auth0DebugComponent';
-import { useVipBuyer } from '@/utils/VipBuyerContext'; // New import for VIP Buyer hook
-import { StarIcon } from '@heroicons/react/24/solid'; // New import for VIP Buyer icon
+import { useVipBuyer } from '@/utils/VipBuyerContext';
+import { StarIcon } from '@heroicons/react/24/solid';
 
 const Profile = () => {
   const { 
@@ -30,12 +29,10 @@ const Profile = () => {
     isLoading, 
     isAuthenticated, 
     logout, 
-    getAccessTokenSilently // Add this
+    getAccessTokenSilently 
   } = useAuth0();
   const { userRoles, userPermissions } = useAuth();
   const permissions = usePermissions();
-  
-  // Use the VIP Buyer hook
   const { isVipBuyer, vipBuyerData, isLoading: vipStatusLoading } = useVipBuyer();
 
   if (isLoading) {
@@ -44,11 +41,11 @@ const Profile = () => {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh] bg-gray-50">
-        <Card className="w-full max-w-md">
+      <div className="flex items-center justify-center min-h-[50vh] bg-background/50">
+        <Card className="w-full max-w-md shadow-md">
           <CardContent className="pt-6 text-center">
-            <h2 className="text-xl font-semibold text-gray-700">Not Logged In</h2>
-            <p className="mt-2 text-gray-500">Please log in to view your profile</p>
+            <h2 className="text-xl font-semibold text-text-700">Not Logged In</h2>
+            <p className="mt-2 text-text-500">Please log in to view your profile</p>
           </CardContent>
         </Card>
       </div>
@@ -113,15 +110,16 @@ const Profile = () => {
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
-      <Card className="w-full overflow-hidden">
-        {/* Header with background */}
-        <div className="h-32 bg-gradient-to-r from-[#3f4f24] to-[#324c48]"></div>
-
-        {/* Profile Main Content */}
-        <CardContent className="relative px-6 pt-0 pb-6">
-          {/* Profile Picture */}
-          <div className="absolute -top-16 left-6">
-            <Avatar className="h-32 w-32 border-4 border-white bg-white">
+      <Card className="w-full shadow-lg overflow-hidden bg-background">
+        {/* Header with proper spacing for avatar */}
+        <div className="relative">
+          {/* Background banner */}
+          <div className="h-40 bg-gradient-to-r from-primary-600 to-secondary-600"></div>
+          
+          {/* User info with aligned profile picture */}
+          <div className="px-6 pb-4 pt-4 flex flex-col md:flex-row md:items-end gap-4">
+            {/* Profile picture */}
+            <Avatar className="h-24 w-24 border-4 border-background mt-[-3rem] bg-white shadow-md">
               {user.picture ? (
                 <img
                   src={user.picture}
@@ -129,302 +127,301 @@ const Profile = () => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <User className="h-16 w-16 text-gray-400" />
+                <User className="h-14 w-14 text-gray-400" />
               )}
             </Avatar>
+            
+            {/* User name and email */}
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-text-800">
+                {user.name || user.nickname || 'User'}
+              </h1>
+              <div className="flex items-center mt-1 text-text-500">
+                <Mail className="w-4 h-4 mr-2" />
+                <span>{user.email}</span>
+              </div>
+            </div>
+            
+            {/* Logout Button */}
+            <Button
+              variant="outline"
+              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 whitespace-nowrap mt-2 md:mt-0"
+              onClick={() => logout({
+                logoutParams: { returnTo: window.location.origin }
+              })}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
+        </div>
 
-          {/* User Info */}
-          <div className="mt-20">
-            <div className="flex items-start justify-between">
+        <Separator />
+
+        {/* Profile Main Content */}
+        <CardContent className="px-6 py-6">
+          {/* User Details */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-5">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">
-                  {user.name || user.nickname || 'User'}
-                </h1>
-                <div className="flex items-center mt-1 text-gray-500">
-                  <Mail className="w-4 h-4 mr-2" />
-                  <span>{user.email}</span>
-                </div>
+                <h3 className="text-sm font-medium text-text-500 mb-2">Email Verification</h3>
+                {user.email_verified ? (
+                  <Badge className="bg-primary-100 text-primary-800 hover:bg-primary-100">
+                    Verified
+                  </Badge>
+                ) : (
+                  <Badge className="bg-accent-100 text-accent-800 hover:bg-accent-100">
+                    Not Verified
+                  </Badge>
+                )}
               </div>
 
-              {/* Logout Button */}
-              <Button
-                variant="outline"
-                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                onClick={() => logout({
-                  logoutParams: { returnTo: window.location.origin }
-                })}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-
-            <Separator className="my-6" />
-
-            {/* User Details */}
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-4">
+              {user.nickname && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Email Verification</h3>
-                  {user.email_verified ? (
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                      Verified
-                    </Badge>
+                  <h3 className="text-sm font-medium text-text-500 mb-2">Nickname</h3>
+                  <p className="text-text-700">{user.nickname}</p>
+                </div>
+              )}
+
+              {user.locale && (
+                <div>
+                  <h3 className="text-sm font-medium text-text-500 mb-2">Locale</h3>
+                  <p className="text-text-700">{user.locale}</p>
+                </div>
+              )}
+              
+              {/* Roles */}
+              <div>
+                <h3 className="text-sm font-medium text-text-500 mb-2">
+                  <div className="flex items-center">
+                    <Shield className="w-4 h-4 mr-2 text-primary" />
+                    Roles
+                  </div>
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {userRoles && userRoles.length > 0 ? (
+                    userRoles.map((role) => (
+                      <Badge 
+                        key={role}
+                        className="bg-primary-50 text-primary-700 hover:bg-primary-100"
+                      >
+                        {role}
+                      </Badge>
+                    ))
                   ) : (
-                    <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
-                      Not Verified
-                    </Badge>
+                    <span className="text-text-400 text-sm italic">No roles assigned</span>
                   )}
                 </div>
-
-                {user.nickname && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Nickname</h3>
-                    <p className="text-gray-700">{user.nickname}</p>
-                  </div>
-                )}
-
-                {user.locale && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Locale</h3>
-                    <p className="text-gray-700">{user.locale}</p>
-                  </div>
-                )}
-                
-                {/* Roles */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">
-                    <div className="flex items-center">
-                      <Shield className="w-4 h-4 mr-2 text-[#3f4f24]" />
-                      Roles
-                    </div>
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {userRoles && userRoles.length > 0 ? (
-                      userRoles.map((role) => (
-                        <Badge 
-                          key={role}
-                          className="bg-[#e8efdc] text-[#3f4f24] hover:bg-[#e8efdc]"
-                        >
-                          {role}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-gray-500 text-sm italic">No roles assigned</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Authentication Method</h3>
-                  <Badge className="capitalize bg-blue-100 text-blue-800 hover:bg-blue-100">
-                    {user.sub?.split('|')[0] || 'auth0'}
-                  </Badge>
-                </div>
-
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Account Created</h3>
-                  <div className="flex items-center">
-                    <CalendarClock className="w-4 h-4 mr-2 text-gray-400" />
-                    <p className="text-gray-700">{createdAt}</p>
-                  </div>
-                </div>
-
-                {user.updated_at && (
-                  <div className="mt-4">
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Last Updated</h3>
-                    <p className="text-gray-700">
-                      {new Date(user.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* VIP Badge section */}
-            {vipStatusLoading ? (
-              <div className="mt-4 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-32"></div>
+            {/* Right Column */}
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-sm font-medium text-text-500 mb-2">Authentication Method</h3>
+                <Badge className="capitalize bg-secondary-100 text-secondary-700 hover:bg-secondary-100">
+                  {user.sub?.split('|')[0] || 'auth0'}
+                </Badge>
               </div>
-            ) : isVipBuyer && (
-              <div className="mt-4 flex items-center">
-                <div className="bg-[#D4A017]/10 border border-[#D4A017] rounded-md px-4 py-2 flex items-center">
-                  <StarIcon className="h-5 w-5 text-[#D4A017] mr-2" />
-                  <div>
-                    <p className="text-[#D4A017] font-semibold">VIP Buyer</p>
-                    <p className="text-sm text-[#324c48]">
-                      Preferred areas: {vipBuyerData?.preferredAreas?.join(', ') || 'N/A'}
-                    </p>
-                  </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-text-500 mb-2">Account Created</h3>
+                <div className="flex items-center">
+                  <CalendarClock className="w-4 h-4 mr-2 text-text-400" />
+                  <p className="text-text-700">{createdAt}</p>
                 </div>
               </div>
-            )}
 
-            {/* Permissions Section */}
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold text-gray-800 flex items-center mb-4">
-                <Key className="w-5 h-5 mr-2 text-[#324c48]" />
-                Permissions
-              </h2>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* User Permissions */}
-                {permissionCategories.user.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <Users className="w-4 h-4 mr-2 text-[#324c48]" />
-                      User Management
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {permissionCategories.user.map(perm => (
-                        <Badge 
-                          key={perm}
-                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
-                        >
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Property Permissions */}
-                {permissionCategories.property.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <Home className="w-4 h-4 mr-2 text-[#324c48]" />
-                      Property Management
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {permissionCategories.property.map(perm => (
-                        <Badge 
-                          key={perm}
-                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
-                        >
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Buyer Permissions */}
-                {permissionCategories.buyer.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <User className="w-4 h-4 mr-2 text-[#324c48]" />
-                      Buyer Management
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {permissionCategories.buyer.map(perm => (
-                        <Badge 
-                          key={perm}
-                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
-                        >
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Offer Permissions */}
-                {permissionCategories.offer.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <FileText className="w-4 h-4 mr-2 text-[#324c48]" />
-                      Offer Management
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {permissionCategories.offer.map(perm => (
-                        <Badge 
-                          key={perm}
-                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
-                        >
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Qualification Permissions */}
-                {permissionCategories.qualification.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <FileText className="w-4 h-4 mr-2 text-[#324c48]" />
-                      Qualification Management
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {permissionCategories.qualification.map(perm => (
-                        <Badge 
-                          key={perm}
-                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
-                        >
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Admin Permissions */}
-                {permissionCategories.admin.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <Shield className="w-4 h-4 mr-2 text-[#324c48]" />
-                      Admin Access
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {permissionCategories.admin.map(perm => (
-                        <Badge 
-                          key={perm}
-                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
-                        >
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Other Permissions */}
-                {permissionCategories.other.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center">
-                      <Key className="w-4 h-4 mr-2 text-[#324c48]" />
-                      Other Permissions
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {permissionCategories.other.map(perm => (
-                        <Badge 
-                          key={perm}
-                          className="bg-[#f0f5f4] text-[#324c48] hover:bg-[#f0f5f4]"
-                        >
-                          {perm}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* No Permissions */}
-                {userPermissions.length === 0 && (
-                  <div className="col-span-2 text-center py-4">
-                    <p className="text-gray-500 italic">No permissions assigned</p>
-                  </div>
-                )}
+              {user.updated_at && (
+                <div>
+                  <h3 className="text-sm font-medium text-text-500 mb-2">Last Updated</h3>
+                  <p className="text-text-700">
+                    {new Date(user.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* VIP Badge section */}
+          {vipStatusLoading ? (
+            <div className="mt-6 animate-pulse">
+              <div className="h-6 bg-gray-200 rounded w-32"></div>
+            </div>
+          ) : isVipBuyer && (
+            <div className="mt-6">
+              <div className="bg-accent-50 border border-accent rounded-md px-4 py-3 flex items-center">
+                <StarIcon className="h-5 w-5 text-accent mr-2" />
+                <div>
+                  <p className="text-accent-700 font-semibold">VIP Buyer</p>
+                  <p className="text-sm text-secondary-600">
+                    Preferred areas: {vipBuyerData?.preferredAreas?.join(', ') || 'N/A'}
+                  </p>
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* Permissions Section */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-text-800 flex items-center mb-4">
+              <Key className="w-5 h-5 mr-2 text-secondary-600" />
+              Permissions
+            </h2>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* User Permissions */}
+              {permissionCategories.user.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-text-700 flex items-center">
+                    <Users className="w-4 h-4 mr-2 text-secondary-600" />
+                    User Management
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionCategories.user.map(perm => (
+                      <Badge 
+                        key={perm}
+                        className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                      >
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Property Permissions */}
+              {permissionCategories.property.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-text-700 flex items-center">
+                    <Home className="w-4 h-4 mr-2 text-secondary-600" />
+                    Property Management
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionCategories.property.map(perm => (
+                      <Badge 
+                        key={perm}
+                        className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                      >
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Buyer Permissions */}
+              {permissionCategories.buyer.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-text-700 flex items-center">
+                    <User className="w-4 h-4 mr-2 text-secondary-600" />
+                    Buyer Management
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionCategories.buyer.map(perm => (
+                      <Badge 
+                        key={perm}
+                        className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                      >
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Offer Permissions */}
+              {permissionCategories.offer.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-text-700 flex items-center">
+                    <FileText className="w-4 h-4 mr-2 text-secondary-600" />
+                    Offer Management
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionCategories.offer.map(perm => (
+                      <Badge 
+                        key={perm}
+                        className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                      >
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Qualification Permissions */}
+              {permissionCategories.qualification.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-text-700 flex items-center">
+                    <FileText className="w-4 h-4 mr-2 text-secondary-600" />
+                    Qualification Management
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionCategories.qualification.map(perm => (
+                      <Badge 
+                        key={perm}
+                        className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                      >
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Admin Permissions */}
+              {permissionCategories.admin.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-text-700 flex items-center">
+                    <Shield className="w-4 h-4 mr-2 text-secondary-600" />
+                    Admin Access
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionCategories.admin.map(perm => (
+                      <Badge 
+                        key={perm}
+                        className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                      >
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Other Permissions */}
+              {permissionCategories.other.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-text-700 flex items-center">
+                    <Key className="w-4 h-4 mr-2 text-secondary-600" />
+                    Other Permissions
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionCategories.other.map(perm => (
+                      <Badge 
+                        key={perm}
+                        className="bg-secondary-50 text-secondary-700 hover:bg-secondary-100"
+                      >
+                        {perm}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* No Permissions */}
+              {userPermissions.length === 0 && (
+                <div className="col-span-2 text-center py-4">
+                  <p className="text-text-400 italic">No permissions assigned</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
 
-        <CardFooter className="bg-gray-50 py-4 border-t text-sm text-gray-500">
+        <CardFooter className="bg-background-50 py-4 border-t text-sm text-text-500">
           <div className="flex items-center space-x-2">
             <User className="w-4 h-4" />
             <span>User ID: {user.sub}</span>
@@ -438,29 +435,35 @@ const Profile = () => {
 // Loading skeleton 
 const ProfileSkeleton = () => (
   <div className="container max-w-4xl mx-auto py-8 px-4">
-    <Card className="w-full overflow-hidden">
-      <div className="h-32 bg-gradient-to-r from-gray-200 to-gray-300"></div>
-      <CardContent className="relative px-6 pt-0 pb-6">
-        <div className="absolute -top-16 left-6">
-          <Skeleton className="h-32 w-32 rounded-full border-4 border-white" />
-        </div>
-        <div className="mt-20">
+    <Card className="w-full shadow-lg overflow-hidden">
+      <div className="h-40 bg-gradient-to-r from-gray-200 to-gray-300"></div>
+      <div className="px-6 pb-4 pt-4 flex flex-col md:flex-row md:items-end gap-4">
+        <Skeleton className="h-24 w-24 rounded-full mt-[-3rem] border-4 border-white" />
+        <div className="flex-1">
           <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-64 mb-6" />
-          <Separator className="my-6" />
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          </div>
-          <Skeleton className="h-40 w-full mt-8" />
+          <Skeleton className="h-4 w-64 mb-1" />
         </div>
+        <Skeleton className="h-10 w-28 mt-2 md:mt-0" />
+      </div>
+      
+      <Separator />
+      
+      <CardContent className="px-6 py-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-5">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+          <div className="space-y-5">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        </div>
+        <Skeleton className="h-40 w-full mt-8" />
       </CardContent>
+      
       <CardFooter className="bg-gray-50 py-4 border-t">
         <Skeleton className="h-4 w-48" />
       </CardFooter>

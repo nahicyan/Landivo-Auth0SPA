@@ -166,16 +166,47 @@ export default class ActivityDataProvider {
    * @returns {Array} Formatted session history
    */
   static _formatSessionHistory(sessionHistory = []) {
+    if (!sessionHistory || !Array.isArray(sessionHistory)) {
+      console.warn('Invalid session history data:', sessionHistory);
+      return [];
+    }
+  
     return sessionHistory.map(session => {
+      // Ensure timestamps are valid
+      let loginTime = session.loginTime;
+      let logoutTime = session.logoutTime;
+      
+      // Validate date strings and ensure they're in ISO format if needed
+      if (loginTime && typeof loginTime === 'string') {
+        try {
+          // Ensure it's a valid date string
+          new Date(loginTime).toISOString();
+        } catch (e) {
+          console.warn('Invalid login time:', loginTime);
+          loginTime = null;
+        }
+      }
+      
+      if (logoutTime && typeof logoutTime === 'string') {
+        try {
+          // Ensure it's a valid date string
+          new Date(logoutTime).toISOString();
+        } catch (e) {
+          console.warn('Invalid logout time:', logoutTime);
+          logoutTime = null;
+        }
+      }
+      
       return {
-        loginTime: session.loginTime,
-        logoutTime: session.logoutTime,
-        device: session.device || 'Unknown device',
-        ipAddress: session.ipAddress || 'Unknown IP'
+        loginTime: loginTime || new Date().toISOString(), // Fallback to current time
+        logoutTime: logoutTime || null,
+        device: session.eventData?.device || session.device || 
+                session.userAgent || session.eventData?.userAgent || 
+                'Unknown device',
+        ipAddress: session.ipAddress || session.eventData?.ipAddress || 'Unknown'
       };
     });
   }
-
   /**
    * Get detailed activity data for a specific category
    * @param {string} buyerId - Buyer ID

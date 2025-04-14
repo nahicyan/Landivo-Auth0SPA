@@ -280,23 +280,49 @@ const ActivityDetail = ({ activity, onBack, loading }) => {
         </div>
       )
     },
-    sessionHistory: {
-      title: "Session History",
-      icon: <Smartphone className="h-5 w-5 text-gray-500" />,
-      render: (item) => (
-        <div key={item.loginTime} className="border rounded-md p-3 mb-2 bg-white">
-          <div className="font-medium text-[#324c48]">{item.device}</div>
-          <div className="text-sm text-gray-500">IP: {item.ipAddress}</div>
-          <div className="flex justify-between mt-1 text-sm">
-            <span>Login: {format(new Date(item.loginTime), 'MMM d, yyyy h:mm a')}</span>
-            <span>Logout: {format(new Date(item.logoutTime), 'h:mm a')}</span>
-          </div>
-          <div className="text-sm mt-1">
-            Duration: {Math.round((new Date(item.logoutTime) - new Date(item.loginTime)) / 60000)} minutes
-          </div>
+'sessionHistory': {
+  title: "Session History",
+  icon: <Smartphone className="h-5 w-5 text-gray-500" />,
+  render: (item) => {
+    // Safely parse dates with fallbacks to avoid invalid date errors
+    const loginTime = item.loginTime ? new Date(item.loginTime) : null;
+    const logoutTime = item.logoutTime ? new Date(item.logoutTime) : null;
+    
+    // Validate dates before formatting them
+    const isValidDate = (date) => date instanceof Date && !isNaN(date);
+    
+    const formatSafeDate = (date) => {
+      if (!date || !isValidDate(date)) {
+        return 'Unknown';
+      }
+      try {
+        return format(date, 'MMM d, yyyy h:mm a');
+      } catch (e) {
+        console.error('Date formatting error:', e);
+        return 'Invalid date';
+      }
+    };
+    
+    // Calculate duration safely
+    const duration = (loginTime && logoutTime && isValidDate(loginTime) && isValidDate(logoutTime))
+      ? Math.floor((logoutTime - loginTime) / (1000 * 60))  // in minutes
+      : null;
+    
+    return (
+      <div key={item.loginTime || Math.random()} className="border rounded-md p-3 mb-2 bg-white">
+        <div className="font-medium text-[#324c48]">{item.device || 'Unknown device'}</div>
+        <div className="text-sm text-gray-500">IP: {item.ipAddress || 'Unknown'}</div>
+        <div className="flex justify-between mt-1 text-sm">
+          <span>Login: {formatSafeDate(loginTime)}</span>
+          <span>Logout: {logoutTime ? formatSafeDate(logoutTime) : 'Session active'}</span>
         </div>
-      )
-    }
+        {duration !== null && (
+          <div className="text-sm mt-1">Duration: {duration} min</div>
+        )}
+      </div>
+    );
+  }
+}
   };
   
   if (loading) {
