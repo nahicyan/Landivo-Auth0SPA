@@ -7,6 +7,9 @@ datasource db {
     url = env("DATABASE_URL")
 }
 
+//--------------------- Users ----------------------//
+
+
 model User {
   id               String      @id @default(auto()) @map("_id") @db.ObjectId
   name             String?
@@ -26,6 +29,8 @@ enum Role {
   USER
   ADMIN
 }
+
+//---------------------- Property ----------------------//
 
 model Residency {
     id                  String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -120,6 +125,8 @@ model Residency {
 }
 
 
+//---------------------- Offer ----------------------//
+
 
 model Offer {
     id          String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -129,6 +136,9 @@ model Offer {
     buyerId     String   @db.ObjectId 
     buyer       Buyer    @relation("BuyerOffers", fields: [buyerId], references: [id])
 }
+
+
+//---------------------- Buyer ----------------------//
 
 
 model Buyer {
@@ -144,6 +154,7 @@ model Buyer {
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
     auth0Id    String?  // this field to store Auth0 user ID
+    activities    BuyerActivity[] @relation("BuyerActivities")
 }
 
 enum BuyerType {
@@ -153,9 +164,35 @@ enum BuyerType {
     Realtor
     Investor
     Wholesaler
-} 
+}
 
-//----------------------  Modifcations for Qualifcations----------------------//
+//---------------------- Activity ----------------------//
+
+
+model BuyerActivity {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  buyerId         String    @db.ObjectId
+  buyer           Buyer     @relation("BuyerActivities", fields: [buyerId], references: [id])
+  eventType       String    // e.g., property_view, click, search, offer_submission, page_view, session_start
+  timestamp       DateTime  @default(now())
+  eventData       Json?     // Flexible structure for different event types
+  sessionId       String?   // To group activities in a session
+  page            String?   // URL or path where the event occurred
+  propertyId      String?   // Reference to property when relevant
+  interactionType String?   // Type of interaction (e.g., button, link, etc.)
+  ipAddress       String?   // IP address for security tracking
+  userAgent       String?   // Browser/device info
+
+  // Create indexes for faster lookups
+  @@index([buyerId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([propertyId])
+  @@index([sessionId])
+}
+
+
+//---------------------- Qualifcations----------------------//
 
 
 model Qualification {
@@ -206,6 +243,8 @@ model Qualification {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 }
+
+//---------------------- Email List ----------------------//
 
 
 model BuyerList {

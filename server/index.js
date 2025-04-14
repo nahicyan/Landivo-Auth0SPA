@@ -1,3 +1,4 @@
+// server/index.js (Updated)
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -10,6 +11,7 @@ import "./config/passportConfig.js"; // Import your passport configuration
 import { userRoute } from "./routes/userRoute.js";
 import { residencyRoute } from "./routes/residencyRoute.js";
 import { buyerRoute } from "./routes/buyerRoute.js";
+import { buyerActivityRoute } from "./routes/buyerActivityRoute.js"; // Add the activity route
 import { sessionLogger, ensureAuthenticated } from "./middlewares/sessionMiddleware.js";
 import { qualificationRoute } from "./routes/qualificationRoute.js";
 import { buyerListRoute } from "./routes/buyerListRoute.js";
@@ -26,7 +28,7 @@ const __dirname = path.dirname(__filename);
 const clientConfig = JSON.parse(fs.readFileSync("client.json", "utf8")).web;
 
 // 3) Middleware setup
-app.use(express.json());
+app.use(express.json({ limit: '5mb' })); // Increase the limit for activity tracking
 app.use(cookieParser());
 app.use(
   cors({
@@ -36,8 +38,6 @@ app.use(
     allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
   })
 );
-
-
 
 app.use(
   session({
@@ -61,7 +61,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
 // 4) Middleware for logging session and request information
 app.use(sessionLogger);
 
@@ -72,6 +71,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/user", userRoute);
 app.use("/api/residency", residencyRoute);
 app.use("/api/buyer", buyerRoute);
+// Add the buyer activity routes
+app.use("/api/buyer", buyerActivityRoute);
 app.use("/api/qualification", qualificationRoute);
 app.use("/api/buyer-lists", buyerListRoute);
 
@@ -85,7 +86,6 @@ app.get("/auth/test-jwt", jwtCheck, extractUserFromToken, (req, res) => {
   });
 });
 
-
 // 8) Test session endpoint (with authentication check)
 app.get("/auth/test-session", ensureAuthenticated, (req, res) => {
   console.log("Session user:", req.user);
@@ -97,6 +97,3 @@ app.listen(PORT, () => {
   console.log("Uploads folder path:", path.join(__dirname, "uploads"));
   console.log(`Backend is running on port ${PORT}`);
 });
-
-
-app.use("/api/buyer-lists", buyerListRoute);

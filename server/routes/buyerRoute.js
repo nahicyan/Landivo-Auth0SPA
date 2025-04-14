@@ -1,4 +1,3 @@
-// server/routes/buyerRoute.js
 import express from "express";
 import { 
   makeOffer, 
@@ -10,44 +9,39 @@ import {
   getBuyerById,
   updateBuyer,
   deleteBuyer,
-  // Email-related endpoints
+  // New email-related endpoints
   getBuyersByArea,
   sendEmailToBuyers,
   importBuyersFromCsv,
   getBuyerStats
 } from "../controllers/buyerCntrl.js";
 import { getBuyerByAuth0Id } from '../controllers/buyerCntrl.js';
-import { 
-  jwtCheck, 
-  extractUserFromToken, 
-  checkPermissions 
-} from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// Public routes - No authentication required
+// Route to create or update an offer
 router.post("/makeOffer", makeOffer);
+
+// Route to get offers by property or buyer
 router.get("/offers/property/:propertyId", getOffersOnProperty);
 router.get("/offers/buyer", getOffersByBuyer);
 
-// Protected routes - with permissions
-// VIP Buyer creation (may be done by regular users)
+// Routes to create buyers
 router.post("/createVipBuyer", createVipBuyer);
+router.post("/create", createBuyer);
 
-// Routes requiring buyer read permission
-router.get("/byAuth0Id", jwtCheck, extractUserFromToken, getBuyerByAuth0Id);
-router.get("/all", jwtCheck, extractUserFromToken, checkPermissions(['read:buyers']), getAllBuyers);
-router.get("/:id", jwtCheck, extractUserFromToken, checkPermissions(['read:buyers']), getBuyerById);
-router.get("/byArea/:areaId", jwtCheck, extractUserFromToken, checkPermissions(['read:buyers']), getBuyersByArea);
-router.get("/stats", jwtCheck, extractUserFromToken, checkPermissions(['read:buyers']), getBuyerStats);
 
-// Routes requiring buyer write permission
-router.post("/create", jwtCheck, extractUserFromToken, checkPermissions(['write:buyers']), createBuyer);
-router.put("/update/:id", jwtCheck, extractUserFromToken, checkPermissions(['write:buyers']), updateBuyer);
-router.post("/import", jwtCheck, extractUserFromToken, checkPermissions(['write:buyers']), importBuyersFromCsv);
-router.post("/sendEmail", jwtCheck, extractUserFromToken, checkPermissions(['write:buyers']), sendEmailToBuyers);
+// Buyer CRUD operations
+router.get("/byAuth0Id", getBuyerByAuth0Id);
+router.get("/all", getAllBuyers);
+router.get("/:id", getBuyerById);
+router.put("/update/:id", updateBuyer);
+router.delete("/delete/:id", deleteBuyer);
 
-// Routes requiring buyer delete permission
-router.delete("/delete/:id", jwtCheck, extractUserFromToken, checkPermissions(['delete:buyers']), deleteBuyer);
+// New buyer list management routes
+router.get("/byArea/:areaId", getBuyersByArea);
+router.post("/sendEmail", sendEmailToBuyers);
+router.post("/import", importBuyersFromCsv);
+router.get("/stats", getBuyerStats);
 
 export { router as buyerRoute };

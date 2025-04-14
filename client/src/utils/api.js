@@ -233,6 +233,86 @@ export const deleteBuyer = async (id) => {
   }
 };
 
+/**
+ * Record buyer activity events
+ * @param {Array} events - Array of activity events
+ * @returns {Promise<Object>} Response data
+ */
+export const recordBuyerActivity = async (events) => {
+  try {
+    const response = await api.post('/buyer/activity', { events });
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to record buyer activity");
+  }
+};
+
+/**
+ * Get activity data for a specific buyer
+ * @param {string} buyerId - Buyer ID
+ * @param {Object} [options] - Query options
+ * @param {number} [options.page=1] - Page number
+ * @param {number} [options.limit=50] - Results per page
+ * @param {string} [options.type] - Filter by event type
+ * @param {string} [options.startDate] - Filter by start date
+ * @param {string} [options.endDate] - Filter by end date
+ * @param {string} [options.propertyId] - Filter by property ID
+ * @returns {Promise<Object>} Activity data
+ */
+export const getBuyerActivity = async (buyerId, options = {}) => {
+  try {
+    const queryParams = new URLSearchParams({
+      page: options.page || 1,
+      limit: options.limit || 50,
+      ...(options.type && { type: options.type }),
+      ...(options.startDate && { startDate: options.startDate }),
+      ...(options.endDate && { endDate: options.endDate }),
+      ...(options.propertyId && { propertyId: options.propertyId })
+    });
+    
+    const response = await api.get(`/buyer/activity/${buyerId}?${queryParams}`);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to fetch buyer activity");
+  }
+};
+
+/**
+ * Get a summary of buyer activity
+ * @param {string} buyerId - Buyer ID
+ * @returns {Promise<Object>} Activity summary
+ */
+export const getBuyerActivitySummary = async (buyerId) => {
+  try {
+    const response = await api.get(`/buyer/activity/${buyerId}/summary`);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to fetch buyer activity summary");
+  }
+};
+
+/**
+ * Delete buyer activity records
+ * @param {string} buyerId - Buyer ID
+ * @param {Object} [options] - Delete options
+ * @param {string} [options.before] - Delete records before this date
+ * @param {string} [options.type] - Delete records of this type
+ * @returns {Promise<Object>} Response data
+ */
+export const deleteBuyerActivity = async (buyerId, options = {}) => {
+  try {
+    const queryParams = new URLSearchParams({
+      ...(options.before && { before: options.before }),
+      ...(options.type && { type: options.type })
+    });
+    
+    const response = await api.delete(`/buyer/activity/${buyerId}?${queryParams}`);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to delete buyer activity");
+  }
+};
+
 // Get all buyer lists
 export const getBuyerLists = async () => {
   try {
