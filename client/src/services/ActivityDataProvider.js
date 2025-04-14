@@ -1,11 +1,10 @@
-// client/src/services/RealActivityDataProvider.js
+// client/src/services/ActivityDataProvider.js
 import { getBuyerActivity, getBuyerActivitySummary } from '@/utils/api';
 
 /**
- * Service for fetching real buyer activity data for the ActivityDetailView
- * Replaces the mock data generation from activityUtils.js
+ * Service for fetching buyer activity data for the ActivityDetailView
  */
-export default class RealActivityDataProvider {
+export default class ActivityDataProvider {
   /**
    * Fetch activity summary for a buyer
    * @param {string} buyerId - Buyer ID
@@ -135,8 +134,6 @@ export default class RealActivityDataProvider {
    * @returns {Array} Formatted email interactions
    */
   static _formatEmailInteractions(emailInteractions = []) {
-    // This data might not be available from the backend yet
-    // Return an empty array or mock data until implemented
     return emailInteractions.map(email => {
       const data = email.eventData || {};
       return {

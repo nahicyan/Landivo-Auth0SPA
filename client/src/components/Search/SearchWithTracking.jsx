@@ -1,56 +1,50 @@
 // client/src/components/Search/SearchWithTracking.jsx
-import React, { useCallback } from 'react';
+import React, { useEffect } from 'react';
 import Search from './Search';
 import { useActivityTrackingContext } from '@/components/ActivityTracking/ActivityTrackingProvider';
 import { useVipBuyer } from '@/utils/VipBuyerContext';
 
 /**
  * Enhanced Search component with VIP buyer activity tracking
- * Tracks search queries and their results
+ * Tracks search queries and results
  */
 const SearchWithTracking = (props) => {
   const { trackSearch, trackEvent } = useActivityTrackingContext();
   const { isVipBuyer } = useVipBuyer();
   
-  // Create a tracked version of the query setter
-  const handleSetQuery = useCallback((query) => {
-    if (isVipBuyer && query !== props.query) {
-      // Track typing in search box
-      trackEvent('search_typing', { query });
-    }
+  // Track when search query changes
+  useEffect(() => {
+    // Only track for VIP buyers
+    if (!isVipBuyer || !props.query) return;
     
-    // Call the original setQuery function
-    props.setQuery(query);
-  }, [isVipBuyer, props.query, props.setQuery, trackEvent]);
-  
-  // Create a tracked version of the search submit handler
-  const handleSubmit = useCallback((e) => {
-    e.preventDefault();
+    // Debounce tracking to avoid excessive events on rapid typing
+    const debounceTimer = setTimeout(() => {
+      // Only track non-empty searches
+      if (props.query.trim()) {
+        trackSearch(
+          props.query,
+          props.filteredData?.length || 0,
+          props.filters || {}
+        );
+        
+        // Track additional search metadata
+        trackEvent('search_query', {
+          query: props.query,
+          resultsCount: props.filteredData?.length || 0,
+          timestamp: new Date().toISOString(),
+          // Track filters if available
+          area: props.filters?.area || null,
+          priceRange: props.filters?.priceRange || null,
+          propertyType: props.filters?.propertyType || null,
+        });
+      }
+    }, 800); // 800ms debounce
     
-    if (isVipBuyer && props.query) {
-      // Get the number of results if available from props or context
-      const resultsCount = 
-        props.resultsCount || 
-        (props.filteredData ? props.filteredData.length : undefined);
-      
-      // Track the search query
-      trackSearch(props.query, resultsCount, props.filters);
-    }
-    
-    // If the original Search component has a submit handler, call it
-    if (props.onSubmit) {
-      props.onSubmit(e);
-    }
-  }, [isVipBuyer, props, trackSearch]);
-  
-  // Pass modified handlers to the original Search component
-  return (
-    <Search 
-      {...props} 
-      setQuery={handleSetQuery}
-      onSubmit={handleSubmit}
-    />
-  );
+    return () => clearTimeout(debounceTimer);
+  }, [isVipBuyer, props.query, props.filteredData, props.filters, trackSearch, trackEvent]);
+
+  // Render the original Search component with all props
+  return <Search {...props} />;
 };
 
 export default SearchWithTracking;

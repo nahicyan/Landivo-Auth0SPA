@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// client/src/components/BuyersTable/ActivityDetailView.jsx
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import {
   Card,
@@ -18,13 +19,167 @@ import {
   Mail,
   Smartphone,
   Clock,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from "lucide-react";
+import ActivityDataProvider from "@/services/ActivityDataProvider";
+
+/**
+ * Activity Detail View component
+ * Displays detailed buyer activity data
+ */
+const ActivityDetailView = ({ buyer, activityData: initialData = null }) => {
+  const [viewMode, setViewMode] = useState("summary");
+  const [detailActivity, setDetailActivity] = useState(null);
+  const [activityData, setActivityData] = useState(initialData);
+  const [loading, setLoading] = useState(!initialData);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch activity data if not provided
+  useEffect(() => {
+    const fetchActivityData = async () => {
+      if (!buyer || !buyer.id) return;
+      
+      try {
+        setLoading(true);
+        const data = await ActivityDataProvider.getActivitySummary(buyer.id);
+        setActivityData(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching activity data:", err);
+        setError("Failed to load activity data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!initialData && buyer) {
+      fetchActivityData();
+    }
+  }, [buyer, initialData]);
+
+  // Fetch detailed activity data when a specific view is selected
+  const handleViewDetail = async (activityType) => {
+    if (!buyer || !buyer.id) return;
+    
+    try {
+      setDetailLoading(true);
+      
+      // Fetch the specific activity type
+      const detailData = await ActivityDataProvider.getDetailedActivity(
+        buyer.id, 
+        activityType.type,
+        { limit: 100 }
+      );
+      
+      setDetailActivity({
+        ...activityType,
+        data: detailData
+      });
+      
+      setViewMode("detail");
+      setError(null);
+    } catch (err) {
+      console.error(`Error fetching ${activityType.type} data:`, err);
+      setError(`Failed to load ${activityType.type} data. Please try again.`);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleBackToSummary = () => {
+    setDetailActivity(null);
+    setViewMode("summary");
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-[#324c48] mb-4" />
+        <p className="text-[#324c48]">Loading activity data...</p>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="text-center p-8 bg-red-50 border border-red-200 rounded-lg text-red-800">
+        <p className="mb-4">{error}</p>
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.reload()}
+          className="border-red-300 text-red-600 hover:bg-red-100"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  if (!activityData) {
+    return (
+      <div className="text-center p-8">
+        <p>No activity data available for this buyer.</p>
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Buyer Activity Dashboard</CardTitle>
+            <CardDescription>
+              Detailed tracking of user engagement and behavior
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-[#324c48] px-3 py-1 flex items-center">
+              <Clock className="h-4 w-4 mr-1" />
+              <span>Last active: {format(new Date(activityData.lastActive), 'MMM d, yyyy')}</span>
+            </Badge>
+            <div className="flex items-center">
+              <div className="font-bold text-lg mr-2">{activityData.engagementScore}</div>
+              <div className="w-16 h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${
+                    activityData.engagementScore >= 80 ? 'bg-green-500' :
+                    activityData.engagementScore >= 50 ? 'bg-yellow-500' :
+                    'bg-red-500'
+                  }`}
+                  style={{ width: `${activityData.engagementScore}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {viewMode === "summary" ? (
+          <ActivitySummary 
+            activity={activityData} 
+            onViewDetail={handleViewDetail}
+          />
+        ) : (
+          <ActivityDetail 
+            activity={detailActivity} 
+            onBack={handleBackToSummary}
+            loading={detailLoading}
+          />
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 /**
  * Activity Detail Component - Shows a detailed breakdown of a specific activity
  */
-const ActivityDetail = ({ activity, onBack }) => {
+const ActivityDetail = ({ activity, onBack, loading }) => {
   const activityTypes = {
     propertyViews: {
       title: "Property Views",
@@ -86,7 +241,7 @@ const ActivityDetail = ({ activity, onBack }) => {
           <div className="font-medium text-[#324c48]">{item.propertyTitle}</div>
           <div className="text-sm text-gray-500">{item.propertyAddress}</div>
           <div className="flex justify-between mt-1">
-            <span className="font-bold">${item.amount.toLocaleString()}</span>
+            <span className="font-bold">${item.amount?.toLocaleString()}</span>
             <Badge className={`
               ${item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : ''}
               ${item.status === 'Accepted' ? 'bg-green-100 text-green-800' : ''}
@@ -112,7 +267,7 @@ const ActivityDetail = ({ activity, onBack }) => {
               {item.opened && ` on ${format(new Date(item.openTimestamp), 'MMM d, yyyy h:mm a')}`}
             </span>
           </div>
-          {item.clicks.length > 0 && (
+          {item.clicks?.length > 0 && (
             <div className="mt-2 border-t pt-2">
               <div className="text-sm font-medium">Clicked Links:</div>
               {item.clicks.map((click, idx) => (
@@ -144,6 +299,15 @@ const ActivityDetail = ({ activity, onBack }) => {
     }
   };
   
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-[#324c48] mb-4" />
+        <p className="text-[#324c48]">Loading detailed activity...</p>
+      </div>
+    );
+  }
+  
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -174,6 +338,11 @@ const ActivityDetail = ({ activity, onBack }) => {
  * Activity Summary Component - Shows an overview of all activity metrics
  */
 const ActivitySummary = ({ activity, onViewDetail }) => {
+  // Helper to check if data exists for a category
+  const hasData = (category) => {
+    return Array.isArray(activity[category]) && activity[category].length > 0;
+  };
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card className="border border-[#324c48]/20">
@@ -190,18 +359,21 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Properties viewed:</span>
               <Badge variant="outline" className="bg-blue-50">
-                {activity.propertyViews.length}
+                {hasData('propertyViews') ? activity.propertyViews.length : 0}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Total view time:</span>
               <span className="text-sm font-medium">
-                {Math.floor(activity.propertyViews.reduce((total, view) => total + view.duration, 0) / 60)} minutes
+                {hasData('propertyViews') 
+                  ? `${Math.floor(activity.propertyViews.reduce((total, view) => total + (view.duration || 0), 0) / 60)} minutes`
+                  : '0 minutes'
+                }
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Most viewed property:</span>
-              {activity.propertyViews.length > 0 ? (
+              {hasData('propertyViews') ? (
                 <span className="text-sm font-medium truncate max-w-[150px]">
                   {activity.propertyViews[0].propertyTitle}
                 </span>
@@ -218,6 +390,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
               type: "propertyViews",
               data: activity.propertyViews
             })}
+            disabled={!hasData('propertyViews')}
           >
             View Details
           </Button>
@@ -238,15 +411,15 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Offers made:</span>
               <Badge variant="outline" className="bg-green-50">
-                {activity.offerHistory.length}
+                {hasData('offerHistory') ? activity.offerHistory.length : 0}
               </Badge>
             </div>
-            {activity.offerHistory.length > 0 ? (
+            {hasData('offerHistory') ? (
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Latest offer:</span>
                   <span className="text-sm font-medium">
-                    ${activity.offerHistory[0].amount.toLocaleString()}
+                    ${activity.offerHistory[0].amount?.toLocaleString() || 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -269,7 +442,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             variant="ghost" 
             size="sm" 
             className="w-full mt-3 text-[#324c48]" 
-            disabled={activity.offerHistory.length === 0}
+            disabled={!hasData('offerHistory')}
             onClick={() => onViewDetail({
               type: "offerHistory",
               data: activity.offerHistory
@@ -294,13 +467,13 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Click events:</span>
               <Badge variant="outline" className="bg-purple-50">
-                {activity.clickEvents.length}
+                {hasData('clickEvents') ? activity.clickEvents.length : 0}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Page visits:</span>
               <Badge variant="outline" className="bg-green-50">
-                {activity.pageVisits.length}
+                {hasData('pageVisits') ? activity.pageVisits.length : 0}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -315,6 +488,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
               variant="ghost" 
               size="sm" 
               className="text-[#324c48]"
+              disabled={!hasData('clickEvents')}
               onClick={() => onViewDetail({
                 type: "clickEvents",
                 data: activity.clickEvents
@@ -326,6 +500,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
               variant="ghost" 
               size="sm" 
               className="text-[#324c48]"
+              disabled={!hasData('pageVisits')}
               onClick={() => onViewDetail({
                 type: "pageVisits",
                 data: activity.pageVisits
@@ -351,10 +526,10 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Total searches:</span>
               <Badge variant="outline" className="bg-orange-50">
-                {activity.searchHistory.length}
+                {hasData('searchHistory') ? activity.searchHistory.length : 0}
               </Badge>
             </div>
-            {activity.searchHistory.length > 0 ? (
+            {hasData('searchHistory') ? (
               <>
                 <div>
                   <div className="text-sm mb-1">Recent searches:</div>
@@ -375,7 +550,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             variant="ghost" 
             size="sm" 
             className="w-full mt-3 text-[#324c48]"
-            disabled={activity.searchHistory.length === 0}
+            disabled={!hasData('searchHistory')}
             onClick={() => onViewDetail({
               type: "searchHistory",
               data: activity.searchHistory
@@ -400,13 +575,13 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Emails received:</span>
               <Badge variant="outline" className="bg-indigo-50">
-                {activity.emailInteractions.length}
+                {hasData('emailInteractions') ? activity.emailInteractions.length : 0}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Open rate:</span>
               <span className="text-sm font-medium">
-                {activity.emailInteractions.length > 0 
+                {hasData('emailInteractions') 
                   ? `${Math.round((activity.emailInteractions.filter(e => e.opened).length / activity.emailInteractions.length) * 100)}%`
                   : "N/A"}
               </span>
@@ -414,8 +589,8 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Click rate:</span>
               <span className="text-sm font-medium">
-                {activity.emailInteractions.length > 0 
-                  ? `${Math.round((activity.emailInteractions.filter(e => e.clicks.length > 0).length / activity.emailInteractions.length) * 100)}%`
+                {hasData('emailInteractions') 
+                  ? `${Math.round((activity.emailInteractions.filter(e => e.clicks && e.clicks.length > 0).length / activity.emailInteractions.length) * 100)}%`
                   : "N/A"}
               </span>
             </div>
@@ -424,7 +599,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             variant="ghost" 
             size="sm" 
             className="w-full mt-3 text-[#324c48]"
-            disabled={activity.emailInteractions.length === 0}
+            disabled={!hasData('emailInteractions')}
             onClick={() => onViewDetail({
               type: "emailInteractions",
               data: activity.emailInteractions
@@ -449,10 +624,10 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             <div className="flex items-center justify-between">
               <span className="text-sm">Total sessions:</span>
               <Badge variant="outline" className="bg-gray-50">
-                {activity.sessionHistory.length}
+                {hasData('sessionHistory') ? activity.sessionHistory.length : 0}
               </Badge>
             </div>
-            {activity.sessionHistory.length > 0 ? (
+            {hasData('sessionHistory') ? (
               <>
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Last login:</span>
@@ -463,7 +638,9 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Device:</span>
                   <span className="text-sm font-medium truncate max-w-[150px]">
-                    {activity.sessionHistory[0].device.split(' ')[0]}
+                    {typeof activity.sessionHistory[0].device === 'string' ? 
+                      activity.sessionHistory[0].device.split(' ')[0] : 
+                      'Unknown'}
                   </span>
                 </div>
               </>
@@ -475,7 +652,7 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
             variant="ghost" 
             size="sm" 
             className="w-full mt-3 text-[#324c48]"
-            disabled={activity.sessionHistory.length === 0}
+            disabled={!hasData('sessionHistory')}
             onClick={() => onViewDetail({
               type: "sessionHistory",
               data: activity.sessionHistory
@@ -486,74 +663,6 @@ const ActivitySummary = ({ activity, onViewDetail }) => {
         </CardContent>
       </Card>
     </div>
-  );
-};
-
-/**
- * Main Activity Detail View component
- * Displays a detailed dashboard of buyer activity with both summary and detailed views
- */
-const ActivityDetailView = ({ activity, buyer }) => {
-  const [viewMode, setViewMode] = useState("summary");
-  const [detailActivity, setDetailActivity] = useState(null);
-
-  const handleViewDetail = (activityData) => {
-    setDetailActivity(activityData);
-    setViewMode("detail");
-  };
-
-  const handleBackToSummary = () => {
-    setDetailActivity(null);
-    setViewMode("summary");
-  };
-
-  if (!activity) {
-    return (
-      <div className="text-center p-8">
-        <p>No activity data available for this buyer.</p>
-      </div>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Buyer Activity Dashboard</CardTitle>
-            <CardDescription>
-              Detailed tracking of user engagement and behavior
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-[#324c48] px-3 py-1 flex items-center">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>Last active: {format(new Date(activity.lastActive), 'MMM d, yyyy')}</span>
-            </Badge>
-            <div className="flex items-center">
-              <div className="font-bold text-lg mr-2">{activity.engagementScore}</div>
-              <div className="w-16 h-4 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full ${
-                    activity.engagementScore >= 80 ? 'bg-green-500' :
-                    activity.engagementScore >= 50 ? 'bg-yellow-500' :
-                    'bg-red-500'
-                  }`}
-                  style={{ width: `${activity.engagementScore}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {viewMode === "summary" ? (
-          <ActivitySummary activity={activity} onViewDetail={handleViewDetail} />
-        ) : (
-          <ActivityDetail activity={detailActivity} onBack={handleBackToSummary} />
-        )}
-      </CardContent>
-    </Card>
   );
 };
 

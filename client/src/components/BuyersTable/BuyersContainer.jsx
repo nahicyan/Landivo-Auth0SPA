@@ -8,7 +8,6 @@ import { toast } from "react-toastify";
 import BuyersTable from "./BuyersTable";
 import BuyerStats from "./BuyerStats";
 import BuyerAreasTab from "./BuyerAreasTab";
-import ActivityDetailView from "./ActivityDetailView";
 
 // Import UI components
 import {
@@ -52,7 +51,6 @@ import { Send, FileUp } from "lucide-react";
 
 // Import constants and utils
 import { AREAS, BUYER_TYPES, exportBuyersToCsv } from "./buyerConstants";
-import { generateActivityData, generateMockBuyers } from "./activityUtils";
 
 /**
  * Main container component for the Buyers section
@@ -75,7 +73,6 @@ const BuyersContainer = () => {
   // Dialog states
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
-  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   
   // Form states
@@ -90,10 +87,6 @@ const BuyersContainer = () => {
     defaultArea: "DFW",
     defaultSource: "CSV Import"
   });
-  
-  // Activity tracking
-  const [selectedBuyerForActivity, setSelectedBuyerForActivity] = useState(null);
-  const [activityData, setActivityData] = useState(null);
   
   // Stats state
   const [stats, setStats] = useState({
@@ -118,28 +111,17 @@ const BuyersContainer = () => {
         // Debug buyers count
         console.log(`Retrieved ${buyersData.length} buyers from API`);
         
-        // If no buyers from API, use some mock data for demo purposes
-        if (buyersData.length === 0) {
-          const mockBuyers = generateMockBuyers();
-          console.log("Using mock buyers data");
-          setBuyers(mockBuyers);
-          setFilteredBuyers(mockBuyers);
-          updateStats(mockBuyers);
-        } else {
-          setBuyers(buyersData);
-          setFilteredBuyers(buyersData);
-          updateStats(buyersData);
-        }
+        setBuyers(buyersData);
+        setFilteredBuyers(buyersData);
+        updateStats(buyersData);
       } catch (error) {
         console.error("Error fetching buyers:", error);
         toast.error("Failed to load buyers list");
         
-        // Use mock data even on error for demo purposes
-        const mockBuyers = generateMockBuyers();
-        console.log("Using mock buyers data after error");
-        setBuyers(mockBuyers);
-        setFilteredBuyers(mockBuyers);
-        updateStats(mockBuyers);
+        // Set empty arrays as fallback
+        setBuyers([]);
+        setFilteredBuyers([]);
+        updateStats([]);
       } finally {
         setLoading(false);
       }
@@ -348,21 +330,14 @@ const BuyersContainer = () => {
         ? buyers.filter(buyer => selectedBuyers.includes(buyer.id))
         : filteredBuyers;
 
-      // Convert to CSV
-      const csvContent = exportBuyersToCsv(buyersToExport);
+      // Export to CSV
+      const success = exportBuyersToCsv(buyersToExport, "buyers_list.csv");
       
-      // Create download link
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", "buyers_list.csv");
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success(`Exported ${buyersToExport.length} buyers`);
+      if (success) {
+        toast.success(`Exported ${buyersToExport.length} buyers`);
+      } else {
+        toast.error("Failed to export buyers - no data to export");
+      }
     } catch (error) {
       console.error("Error exporting buyers:", error);
       toast.error("Failed to export buyers list");
@@ -380,17 +355,6 @@ const BuyersContainer = () => {
       )
     );
   }, [buyers]);
-  
-  // Handle view activity
-  const handleViewActivity = useCallback((buyer) => {
-    setSelectedBuyerForActivity(buyer);
-    
-    // Generate mock activity data for this buyer
-    const mockActivity = generateActivityData(buyer.id, buyer.firstName, buyer.lastName);
-    setActivityData(mockActivity);
-    
-    setActivityDialogOpen(true);
-  }, []);
 
   if (loading) {
     return (
@@ -440,7 +404,6 @@ const BuyersContainer = () => {
               setEmailDialogOpen={setEmailDialogOpen}
               setBulkImportOpen={setBulkImportOpen}
               onExport={handleExport}
-              onViewActivity={handleViewActivity}
               navigate={navigate}
             />
           </Card>
@@ -541,38 +504,6 @@ const BuyersContainer = () => {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Activity Detail Dialog */}
-      <Dialog 
-        open={activityDialogOpen} 
-        onOpenChange={setActivityDialogOpen}
-      >
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Buyer Activity Dashboard</DialogTitle>
-            <DialogDescription>
-              {selectedBuyerForActivity && (
-                <>Detailed activity for {selectedBuyerForActivity.firstName} {selectedBuyerForActivity.lastName}</>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="max-h-[70vh] overflow-y-auto">
-            {selectedBuyerForActivity && activityData && (
-              <ActivityDetailView activity={activityData} buyer={selectedBuyerForActivity} />
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setActivityDialogOpen(false)}
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       
       {/* Email Dialog */}
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>

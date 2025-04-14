@@ -78,8 +78,8 @@ export const getBuyerTypeClass = (buyerType) => {
  * @param {Array} buyers - Array of buyer objects
  * @returns {string} CSV content
  */
-export const exportBuyersToCsv = (buyers) => {
-  if (!buyers || !buyers.length) return '';
+export const exportBuyersToCsv = (buyers, filename = "buyers_list.csv") => {
+  if (!buyers || !buyers.length) return false;
   
   const headers = ["First Name", "Last Name", "Email", "Phone", "Buyer Type", "Preferred Areas", "Source"];
   const csvRows = [headers];
@@ -107,5 +107,19 @@ export const exportBuyersToCsv = (buyers) => {
     csvRows.push(escapedRow);
   });
 
-  return csvRows.map(row => row.join(",")).join("\n");
+  const csvContent = csvRows.map(row => row.join(",")).join("\n");
+  
+  // Create and download the file
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = "hidden";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  return true;
 };
