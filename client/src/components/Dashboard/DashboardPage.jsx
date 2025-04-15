@@ -9,6 +9,7 @@ import { CalendarDateRangePicker } from "@/components/ui/date-range-picker"; // 
 import { Download, Filter, RefreshCw, Plus } from "lucide-react";
 
 // Import dashboard widgets
+import DealsWidget from "./widgets/DealsWidget";
 import StatCards from "./widgets/StatCards";
 import FinanceWidget from "./widgets/FinanceWidget";
 import ActivityWidget from "./widgets/ActivityWidget";
@@ -73,6 +74,7 @@ export default function DashboardPage() {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <DealsWidget isLoading={isLoading} />
             <ActivityWidget isLoading={isLoading} />
             <OffersWidget isLoading={isLoading} />
             <PropertiesWidget isLoading={isLoading} />

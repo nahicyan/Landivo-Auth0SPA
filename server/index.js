@@ -11,6 +11,7 @@ import "./config/passportConfig.js"; // Import your passport configuration
 import { userRoute } from "./routes/userRoute.js";
 import { residencyRoute } from "./routes/residencyRoute.js";
 import { buyerRoute } from "./routes/buyerRoute.js";
+import { dealRoute } from "./routes/dealRoute.js";
 import { buyerActivityRoute } from "./routes/buyerActivityRoute.js"; // Add the activity route
 import { sessionLogger, ensureAuthenticated } from "./middlewares/sessionMiddleware.js";
 import { qualificationRoute } from "./routes/qualificationRoute.js";
@@ -76,6 +77,8 @@ app.use("/api/buyer", buyerActivityRoute);
 app.use("/api/qualification", qualificationRoute);
 app.use("/api/buyer-lists", buyerListRoute);
 
+//Deal Routes
+app.use("/api/deal", dealRoute);
 // 7) Authentication routes
 // Auth route for testing JWT token
 app.get("/auth/test-jwt", jwtCheck, extractUserFromToken, (req, res) => {

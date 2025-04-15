@@ -12,11 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import Unauthorized from "./pages/Unauthorized/Unauthorized";
 import Site from "./pages/Site";
 import Properties from "./pages/Properties/Properties";
-
 import PropertyWithTracking from "./pages/Property/PropertyWithTracking";
-import SearchWithTracking from "./components/Search/SearchWithTracking";
-import OfferWithTracking from "./components/Offer/OfferWithTracking";
-
 import OfferTable from "./components/OfferTable/OfferTable";
 import AddProperty from "./pages/AddProperty/AddProperty";
 import { UserProvider } from "./utils/UserContext";
@@ -48,6 +44,10 @@ import BuyerOffers from "./components/BuyerOffers/BuyerOffers";
 import BuyerLists from "./components/BuyerLists/BuyerLists";
 import Profile from "./pages/Profile/Profile";
 import VipSignupSuccess from "./pages/Subscription/VipSignupSuccess";
+import CreateDealForm from "@/components/Deal/CreateDealForm";
+import DealsList from "@/components/Deal/DealsList";
+import DealDetail from "@/components/Deal/DealDetail";
+import DealFinancialSummary from "@/components/Deal/DealFinancialSummary";
 import { Auth0ProviderWithNavigate } from "./components/Auth0/Auth0Provider";
 import { PermissionsProvider } from "./components/Auth0/PermissionsContext";
 import { PERMISSIONS } from "./utils/permissions";
@@ -110,6 +110,11 @@ function App() {
                         <Route path="/SanAntonio" element={<SanAntonio />} />
                         <Route path="/OtherLands" element={<OtherLands />} />
                         <Route path="/unauthorized" element={<Unauthorized />} />
+                        {/* Testing Deals */}
+                        <Route path="/admin/deals" element={<DealsList />} />
+                        <Route path="/admin/deals/create" element={<CreateDealForm />} />
+                        <Route path="/admin/deals/:id" element={<DealDetail />} />
+                        <Route path="/admin/deals/:id/summary" element={<DealFinancialSummary />} />
                         {/* Protected route for profile */}
                         <Route
                           path="/profile"

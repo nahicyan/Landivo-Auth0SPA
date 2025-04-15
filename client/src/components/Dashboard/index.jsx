@@ -14,6 +14,7 @@ import BuyerListsWidget from "./widgets/BuyerListsWidget";
 import EmailReportWidget from "./widgets/EmailReportWidget";
 import QualificationsWidget from "./widgets/QualificationsWidget";
 import VisitorsWidget from "./widgets/VisitorsWidget";
+import DealsWidget from "./widgets/DealsWidget"; 
 
 // Default export is the main dashboard
 export default DashboardPage;
@@ -29,7 +30,8 @@ export {
   BuyerListsWidget,
   EmailReportWidget,
   QualificationsWidget,
-  VisitorsWidget
+  VisitorsWidget,
+  DealsWidget
 };
 
 // Utility functions specific to the dashboard could also be exported here

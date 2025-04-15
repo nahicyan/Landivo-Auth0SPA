@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 
 export const api = axios.create({
-  baseURL: `${import.meta.env.VITE_SERVER_URL}/api`, // Update with your actual backend URL
+  baseURL: `${import.meta.env.VITE_SERVER_URL}/api`, //
   withCredentials: true, // Enable cookies for cross-origin requests
 });
 
@@ -413,5 +413,70 @@ export const sendEmailToList = async (listId, emailData) => {
     return response.data;
   } catch (error) {
     handleRequestError(error, "Failed to send email to list");
+  }
+};
+
+
+// Create a new deal
+
+export const createDeal = async (dealData) => {
+  try {
+    console.log("Creating deal with data:", JSON.stringify(dealData, null, 2));
+    const response = await api.post('/deal/create', dealData);
+    return response.data;
+  } catch (error) {
+    console.error("Deal creation error details:", error.response?.data);
+    handleRequestError(error, "Failed to create deal");
+  }
+};
+
+// Get all deals
+export const getAllDeals = async (filters = {}) => {
+  try {
+    const queryParams = new URLSearchParams(filters);
+    const response = await api.get(`/deal/all?${queryParams}`);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to fetch deals");
+  }
+};
+
+// Get deal by ID
+export const getDealById = async (id) => {
+  try {
+    const response = await api.get(`/deal/${id}`);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to fetch deal");
+  }
+};
+
+// Update deal
+export const updateDeal = async (id, dealData) => {
+  try {
+    const response = await api.put(`/deal/update/${id}`, dealData);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to update deal");
+  }
+};
+
+// Record a payment
+export const recordPayment = async (paymentData) => {
+  try {
+    const response = await api.post('/deal/payment', paymentData);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to record payment");
+  }
+};
+
+// Get deal financial summary
+export const getDealFinancialSummary = async (id) => {
+  try {
+    const response = await api.get(`/deal/${id}/summary`);
+    return response.data;
+  } catch (error) {
+    handleRequestError(error, "Failed to fetch deal summary");
   }
 };
