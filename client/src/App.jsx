@@ -44,10 +44,12 @@ import BuyerOffers from "./components/BuyerOffers/BuyerOffers";
 import BuyerLists from "./components/BuyerLists/BuyerLists";
 import Profile from "./pages/Profile/Profile";
 import VipSignupSuccess from "./pages/Subscription/VipSignupSuccess";
+import AdminDeals from "./pages/AdminDeals/AdminDeals";
 import CreateDealForm from "@/components/Deal/CreateDealForm";
-import DealsList from "@/components/Deal/DealsList";
 import DealDetail from "@/components/Deal/DealDetail";
 import DealFinancialSummary from "@/components/Deal/DealFinancialSummary";
+import DealsList from "@/components/Deal/DealsList";
+import PaymentList from "@/components/Deal/PaymentList";
 import { Auth0ProviderWithNavigate } from "./components/Auth0/Auth0Provider";
 import { PermissionsProvider } from "./components/Auth0/PermissionsContext";
 import { PERMISSIONS } from "./utils/permissions";
@@ -110,11 +112,6 @@ function App() {
                         <Route path="/SanAntonio" element={<SanAntonio />} />
                         <Route path="/OtherLands" element={<OtherLands />} />
                         <Route path="/unauthorized" element={<Unauthorized />} />
-                        {/* Testing Deals */}
-                        <Route path="/admin/deals" element={<DealsList />} />
-                        <Route path="/admin/deals/create" element={<CreateDealForm />} />
-                        <Route path="/admin/deals/:id" element={<DealDetail />} />
-                        <Route path="/admin/deals/:id/summary" element={<DealFinancialSummary />} />
                         {/* Protected route for profile */}
                         <Route
                           path="/profile"
@@ -152,6 +149,13 @@ function App() {
                         }
                       >
                         <Route index element={<Admin />} />
+                        {/* Testing Deals */}
+                        <Route path="/admin/deals" element={<AdminDeals />} />
+                        <Route path="/admin/deals/list" element={<DealsList />} />
+                        <Route path="/admin/deals/create" element={<CreateDealForm />} />
+                        <Route path="/admin/deals/:id" element={<DealDetail />} />
+                        <Route path="/admin/deals/:id/payments" element={<PaymentList />} />
+                        <Route path="/admin/deals/:id/summary" element={<DealFinancialSummary />} />
                         <Route
                           path="users"
                           element={

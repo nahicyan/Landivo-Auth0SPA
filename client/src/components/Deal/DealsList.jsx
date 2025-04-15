@@ -47,7 +47,7 @@ export default function DealsList() {
   const [filters, setFilters] = useState({
     page: 1,
     limit: 10,
-    status: "",
+    Dealstatus: "all", // Changed from empty string to "all"
     search: "",
     sort: "startDate",
     order: "desc"
@@ -73,7 +73,7 @@ export default function DealsList() {
   const handleStatusChange = (value) => {
     setFilters(prev => ({
       ...prev,
-      status: value,
+      status: value === "all" ? "" : value, // Convert "all" back to empty string for API
       page: 1
     }));
   };
@@ -181,7 +181,7 @@ export default function DealsList() {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="PENDING">Pending</SelectItem>
                 <SelectItem value="COMPLETED">Completed</SelectItem>

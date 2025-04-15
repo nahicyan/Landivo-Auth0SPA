@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, DollarSign, TrendingUp, TrendingDown, Plus } from "lucide-react";
+import { Users, Home, Plus, TrendingUp, TrendingDown, CalendarDays, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 export default function DealsWidget({ isLoading, fullSize = false }) {
@@ -46,6 +46,7 @@ export default function DealsWidget({ isLoading, fullSize = false }) {
     }
   };
   
+  // Use an empty array if deals are not available yet
   const deals = data?.deals || [];
   
   return (
